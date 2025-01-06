@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.SeekBar
 import androidx.core.view.doOnPreDraw
+import com.sonsation.library.model.StrokeType
 import com.sonsation.shadowlayout.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
@@ -100,6 +101,38 @@ class MainActivity : AppCompatActivity() {
                     val blur = resources.displayMetrics.density * progress
                     shadowLayout.updateStrokeBlur(blur)
                     bind.strokeBlurValue.text = "${blur}dp"
+                }
+
+                override fun onStartTrackingTouch(seekBar: SeekBar?) {
+
+                }
+
+                override fun onStopTrackingTouch(seekBar: SeekBar?) {
+
+                }
+            })
+        }
+
+        bind.strokeTypeSeekbar.apply {
+            min = 0
+            max = 2
+            setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                    val type = if (progress == 1) {
+                        StrokeType.CENTER
+                    } else if (progress == 2) {
+                        StrokeType.OUTSIDE
+                    } else {
+                        StrokeType.INSIDE
+                    }
+                    shadowLayout.updateStrokeType(type)
+                    bind.strokeTypeValue.text = if (progress == 1) {
+                        "CENTER"
+                    } else if (progress == 2) {
+                        "OUTSIDE"
+                    } else {
+                        "INSIDE"
+                    }
                 }
 
                 override fun onStartTrackingTouch(seekBar: SeekBar?) {

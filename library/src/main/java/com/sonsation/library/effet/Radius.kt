@@ -1,12 +1,16 @@
 package com.sonsation.library.effet
 
-class Radius(var topLeftRadius: Float = 0f,
-             var topRightRadius: Float = 0f,
-             var bottomLeftRadius: Float = 0f,
-             var bottomRightRadius: Float = 0f) {
+class Radius(
+    var topLeftRadius: Float = 0f,
+    var topRightRadius: Float = 0f,
+    var bottomLeftRadius: Float = 0f,
+    var bottomRightRadius: Float = 0f
+) {
 
     constructor(radius: Float) : this(radius, radius, radius, radius)
 
+    val isEnable =
+        topLeftRadius > 0f || topRightRadius > 0f || bottomLeftRadius > 0f || bottomRightRadius > 0f
     var radiusHalf = false
     var radiusWeight = 1f
 
@@ -48,14 +52,14 @@ class Radius(var topLeftRadius: Float = 0f,
         }
 
         return floatArrayOf(
-                targetTopLeftRadius,
-                targetTopLeftRadius,
-                targetTopRightRadius,
-                targetTopRightRadius,
-                targetBottomRightRadius,
-                targetBottomRightRadius,
-                targetBottomLeftRadius,
-                targetBottomLeftRadius
+            targetTopLeftRadius,
+            targetTopLeftRadius,
+            targetTopRightRadius,
+            targetTopRightRadius,
+            targetBottomRightRadius,
+            targetBottomRightRadius,
+            targetBottomLeftRadius,
+            targetBottomLeftRadius
         )
     }
 

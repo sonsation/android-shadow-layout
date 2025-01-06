@@ -11,8 +11,8 @@ class Shadow(
     var shadowSpread: Float = 0f
 ) {
 
-    val paint by lazy { Paint() }
-    val path by lazy { Path() }
+    private val paint by lazy { Paint() }
+    private val path by lazy { Path() }
 
     val isEnable: Boolean
         get() = (blurSize != 0f || shadowSpread != 0f) && shadowColor != ViewHelper.NOT_SET_COLOR
@@ -77,5 +77,9 @@ class Shadow(
 
     fun updateShadowBlurSize(size: Float) {
         this.blurSize = size
+    }
+
+    fun draw(canvas: Canvas) {
+        canvas.drawPath(path, paint)
     }
 }
