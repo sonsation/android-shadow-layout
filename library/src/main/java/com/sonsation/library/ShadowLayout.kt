@@ -708,10 +708,10 @@ class ShadowLayout : FrameLayout {
             reset()
 
             if (radius?.isEnable == true) {
-                addRect(outlineRect, Path.Direction.CW)
-            } else {
                 val height = outlineRect.height()
                 addRoundRect(outlineRect, radius!!.getRadiusArray(height), Path.Direction.CW)
+            } else {
+                addRect(outlineRect, Path.Direction.CW)
             }
 
             close()
@@ -730,10 +730,10 @@ class ShadowLayout : FrameLayout {
             } else {
                 targetRect.set(outlineRect)
                 if (radius?.isEnable == true) {
-                    addRect(outlineRect, Path.Direction.CW)
-                } else {
                     val height = outlineRect.height()
                     addRoundRect(outlineRect, radius!!.getRadiusArray(height), Path.Direction.CW)
+                } else {
+                    addRect(outlineRect, Path.Direction.CW)
                 }
             }
 
