@@ -9,11 +9,11 @@ class Radius(
 
     constructor(radius: Float) : this(radius, radius, radius, radius)
 
+    val isEnable: Boolean
+        get() = (topLeftRadius > 0f || topRightRadius > 0f || bottomLeftRadius > 0f || bottomRightRadius > 0f) || radiusHalf
+
     var radiusHalf = false
     var radiusWeight = 1f
-
-    val isEnable =
-        (topLeftRadius > 0f || topRightRadius > 0f || bottomLeftRadius > 0f || bottomRightRadius > 0f) || radiusHalf
 
     fun updateRadius(radius: Float) {
         this.topLeftRadius = radius
