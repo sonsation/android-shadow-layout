@@ -91,6 +91,9 @@ This document serves as a reference for the available methods to update and cust
 - **`updateStrokeColor(color: Int)`**  
   Updates the color of the stroke.
 
+- **`updateStrokeType(strokeType: StrokeType)`**  
+  Updates the type of the stroke.  
+
 - **`updateStrokeBlur(blur: Float)`**  
   Applies a blur effect to the stroke with the specified intensity.
 
