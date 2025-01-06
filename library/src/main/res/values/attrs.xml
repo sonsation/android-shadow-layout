@@ -2,6 +2,7 @@
 <resources>
 
     <declare-styleable name="ShadowLayout">
+        <attr name="autoAdjustPadding" format="boolean"/>
         <attr name="clipToOutline" format="boolean"/>
         <attr name="background_blur" format="dimension" />
         <attr name="background_radius_weight" format="float" />
@@ -37,9 +38,9 @@
             <enum name="INNER" value="3"/>
         </attr>
         <attr name="stroke_type" format="enum">
-            <enum name="INNER" value="0"/>
+            <enum name="INSIDE" value="0"/>
             <enum name="CENTER" value="1"/>
-            <enum name="OUTER" value="2"/>
+            <enum name="OUTSIDE" value="2"/>
         </attr>
 
         <attr name="shadow_color" format="color" />

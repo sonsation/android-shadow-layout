@@ -46,19 +46,29 @@ class ShadowLayout : FrameLayout {
         Padding(0, 0, 0, 0)
     }
 
-    private var backgroundColor = ViewHelper.NOT_SET_COLOR
-    private var backgroundBlur = 0f
-    private var backgroundBlurType = BlurMaskFilter.Blur.NORMAL
-
-    private var radius: Radius? = null
-    private var stroke: Stroke? = null
-    private var gradient: Gradient? = null
-    private var strokeGradient: Gradient? = null
-    private val shadows by lazy {
+    var autoAdjustPadding = false
+        private set
+    var backgroundColor = ViewHelper.NOT_SET_COLOR
+        private set
+    var backgroundBlur = 0f
+        private set
+    var backgroundBlurType = BlurMaskFilter.Blur.NORMAL
+        private set
+    var radius: Radius? = null
+        private set
+    var stroke: Stroke? = null
+        private set
+    var gradient: Gradient? = null
+        private set
+    var strokeGradient: Gradient? = null
+        private set
+    val shadows by lazy {
         mutableListOf<Shadow>()
     }
 
-    private var clipOutLine = false
+    var clipOutLine = false
+        private set
+
     private var isInitialized = false
 
 
@@ -92,7 +102,7 @@ class ShadowLayout : FrameLayout {
         val a = context.obtainStyledAttributes(attributeSet, R.styleable.ShadowLayout, defStyle, 0)
 
         try {
-
+            autoAdjustPadding = a.getBoolean(R.styleable.ShadowLayout_autoAdjustPadding, false)
             clipOutLine = a.getBoolean(R.styleable.ShadowLayout_clipToOutline, false)
             stroke = Stroke(
                 strokeColor =
@@ -101,9 +111,9 @@ class ShadowLayout : FrameLayout {
                 strokeType = StrokeType.entries.find {
                     it.ordinal == a.getInteger(
                         R.styleable.ShadowLayout_stroke_type,
-                        StrokeType.OUTSIDE.type
+                        StrokeType.INSIDE.type
                     )
-                } ?: StrokeType.OUTSIDE
+                } ?: StrokeType.INSIDE
             ).apply {
                 this.blurType = BlurMaskFilter.Blur.entries.find {
                     it.ordinal == a.getInteger(
@@ -402,7 +412,11 @@ class ShadowLayout : FrameLayout {
 
     fun updateStrokeWidth(strokeWidth: Float) {
         stroke?.updateStrokeWidth(strokeWidth)
-        updatePadding()
+        if (autoAdjustPadding) {
+            updatePadding()
+        } else {
+            invalidate()
+        }
     }
 
     override fun setPadding(
@@ -414,7 +428,7 @@ class ShadowLayout : FrameLayout {
 
         padding.setPadding(left, top, right, bottom)
 
-        if (stroke?.isEnable == true) {
+        if (autoAdjustPadding && stroke?.isEnable == true) {
             val strokeWidth = stroke?.takeIf { it.isEnable }?.strokeWidth ?: 0f
 
             when (stroke!!.strokeType) {
@@ -446,7 +460,7 @@ class ShadowLayout : FrameLayout {
 
         padding.setPadding(left, top, right, bottom)
 
-        if (stroke?.isEnable == true) {
+        if (autoAdjustPadding && stroke?.isEnable == true) {
             val strokeWidth = stroke?.takeIf { it.isEnable }?.strokeWidth ?: 0f
 
             when (stroke!!.strokeType) {
@@ -561,7 +575,11 @@ class ShadowLayout : FrameLayout {
 
     fun updateStrokeType(strokeType: StrokeType) {
         this.stroke?.strokeType = strokeType
-        updatePadding()
+        if (autoAdjustPadding) {
+            updatePadding()
+        } else {
+            invalidate()
+        }
     }
 
     fun getGradientInfo(): Gradient? {
@@ -750,5 +768,10 @@ class ShadowLayout : FrameLayout {
 
             close()
         }
+    }
+
+    fun setAutoAdjustPadding(isEnable: Boolean) {
+        autoAdjustPadding = isEnable
+        updatePadding()
     }
 }
