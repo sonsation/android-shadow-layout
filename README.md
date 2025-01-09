@@ -110,10 +110,10 @@ This document serves as a reference for the available methods to update and cust
 - **`updateGradientColor(startColor: Int, endColor: Int)`**  
   Updates the gradient color with two colors: start and end.
 
-- **`updateGradientColors(colors: IntArray)`**  
+- **`updateGradientColors(colors: IntArray?)`**  
   Updates the colors of the gradient.
 
-- **`updateGradientPositions(positions: FloatArray)`**  
+- **`updateGradientPositions(positions: FloatArray?)`**  
   Updates the positions of the gradient.
 
 - **`updateGradientAngle(angle: Int)`**  
@@ -121,6 +121,9 @@ This document serves as a reference for the available methods to update and cust
 
 - **`updateLocalMatrix(matrix: Matrix?)`**  
   Applies a local transformation matrix to the gradient.
+
+- **`updateGradientShader(shader: GradientShader?)`**  
+  Updates the shader of the gradient.
 
 - **`updateGradientOffsetX(offset: Float)`**  
   Updates the horizontal offset of the gradient.
@@ -134,10 +137,10 @@ This document serves as a reference for the available methods to update and cust
 - **`updateStrokeGradientColor(startColor: Int, endColor: Int)`**  
   Updates the stroke's gradient color with two colors.
 
-- **`updateStrokeGradientColors(colors: IntArray)`**  
+- **`updateStrokeGradientColors(colors: IntArray?)`**  
   Updates the stroke's gradient colors.
 
-- **`updateStrokeGradientPositions(positions: FloatArray)`**  
+- **`updateStrokeGradientPositions(positions: FloatArray?)`**  
   Updates the stroke's gradient positions.
 
 - **`updateStrokeGradientAngle(angle: Int)`**  
@@ -145,6 +148,9 @@ This document serves as a reference for the available methods to update and cust
 
 - **`updateStrokeLocalMatrix(matrix: Matrix?)`**  
   Applies a local transformation matrix to the stroke's gradient.
+
+- **`updateStrokeGradientShader(shader: GradientShader?)`**  
+  Updates the stroke's gradient shader.
 
 - **`updateStrokeGradientOffsetX(offset: Float)`**  
   Updates the horizontal offset of the stroke's gradient.
