@@ -14,7 +14,7 @@ object ViewHelper {
 
     const val NOT_SET_COLOR = -101
 
-    fun parseGradientArray(arrays: String?): List<Int>? {
+    fun parseGradientColors(arrays: String?): List<Int>? {
 
         if (arrays.isNullOrEmpty())
             return null

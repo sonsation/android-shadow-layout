@@ -30,6 +30,8 @@
         <attr name="stroke_gradient_angle" format="integer"/>
         <attr name="stroke_gradient_offset_x" format="dimension"/>
         <attr name="stroke_gradient_offset_y" format="dimension"/>
+        <attr name="stroke_gradient_colors" format="string"/>
+        <attr name="stroke_gradient_positions" format="string"/>
         <attr name="stroke_blur" format="dimension"/>
         <attr name="stroke_blur_type" format="enum">
             <enum name="NORMAL" value="0"/>
@@ -57,7 +59,7 @@
         <attr name="gradient_offset_x" format="dimension"/>
         <attr name="gradient_offset_y" format="dimension"/>
         <attr name="gradient_margin" format="dimension"/>
-        <attr name="gradient_array" format="string"/>
+        <attr name="gradient_colors" format="string"/>
         <attr name="gradient_positions" format="string"/>
     </declare-styleable>
 </resources>

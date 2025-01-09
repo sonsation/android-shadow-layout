@@ -165,7 +165,7 @@ class ShadowLayout : FrameLayout {
                 gradientAngle = a.getInt(R.styleable.ShadowLayout_gradient_angle, -1),
                 gradientOffsetX = a.getDimension(R.styleable.ShadowLayout_gradient_offset_x, 0f),
                 gradientOffsetY = a.getDimension(R.styleable.ShadowLayout_gradient_offset_y, 0f),
-                gradientArray = ViewHelper.parseGradientArray(a.getString(R.styleable.ShadowLayout_gradient_array))
+                gradientColors = ViewHelper.parseGradientColors(a.getString(R.styleable.ShadowLayout_gradient_colors))
                     ?.toIntArray(),
                 gradientPositions = ViewHelper.parseGradientPositions(a.getString(R.styleable.ShadowLayout_gradient_positions))
                     ?.toFloatArray()
@@ -193,9 +193,9 @@ class ShadowLayout : FrameLayout {
                     R.styleable.ShadowLayout_stroke_gradient_offset_y,
                     0f
                 ),
-                gradientArray = ViewHelper.parseGradientArray(a.getString(R.styleable.ShadowLayout_gradient_array))
+                gradientColors = ViewHelper.parseGradientColors(a.getString(R.styleable.ShadowLayout_stroke_gradient_colors))
                     ?.toIntArray(),
-                gradientPositions = ViewHelper.parseGradientPositions(a.getString(R.styleable.ShadowLayout_gradient_positions))
+                gradientPositions = ViewHelper.parseGradientPositions(a.getString(R.styleable.ShadowLayout_stroke_gradient_positions))
                     ?.toFloatArray()
             )
 
@@ -503,6 +503,16 @@ class ShadowLayout : FrameLayout {
         invalidate()
     }
 
+    fun updateGradientColors(colors: IntArray) {
+        this.gradient?.updateGradientColors(colors)
+        invalidate()
+    }
+
+    fun updateGradientPositions(positions: FloatArray) {
+        this.gradient?.gradientPositions = positions
+        invalidate()
+    }
+
     fun updateLocalMatrix(matrix: Matrix?) {
         this.gradient?.updateLocalMatrix(matrix)
         invalidate()
@@ -530,6 +540,16 @@ class ShadowLayout : FrameLayout {
 
     fun updateStrokeGradientAngle(angle: Int) {
         this.strokeGradient?.updateGradientAngle(angle)
+        invalidate()
+    }
+
+    fun updateStrokeGradientColors(colors: IntArray) {
+        this.strokeGradient?.updateGradientColors(colors)
+        invalidate()
+    }
+
+    fun updateStrokeGradientPositions(positions: FloatArray) {
+        this.strokeGradient?.updateGradientPositions(positions)
         invalidate()
     }
 

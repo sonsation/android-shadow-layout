@@ -10,20 +10,20 @@ class Gradient(
     var gradientAngle: Int = 0,
     var gradientOffsetX: Float = 0f,
     var gradientOffsetY: Float = 0f,
-    var gradientArray: IntArray? = null,
+    var gradientColors: IntArray? = null,
     var gradientPositions: FloatArray? = null
 ) {
 
     val isEnable: Boolean
         get() = ((gradientStartColor != ViewHelper.NOT_SET_COLOR && gradientEndColor != ViewHelper.NOT_SET_COLOR)
-                || (gradientArray != null && gradientArray?.isNotEmpty() == true)) && gradientAngle != -1
+                || (gradientColors != null && gradientColors?.isNotEmpty() == true)) && gradientAngle != -1
 
     private var localMatrix: Matrix? = null
 
     fun getGradientShader(offsetLeft: Float, offsetTop: Float, offsetRight: Float, offsetBottom: Float): LinearGradient {
 
-        val colors = if (gradientArray != null && gradientArray?.isNotEmpty() == true) {
-            gradientArray!!
+        val colors = if (gradientColors != null && gradientColors?.isNotEmpty() == true) {
+            gradientColors!!
         } else {
             if (gradientCenterColor == ViewHelper.NOT_SET_COLOR) {
                 intArrayOf(gradientStartColor, gradientEndColor)
@@ -112,5 +112,13 @@ class Gradient(
 
     fun updateLocalMatrix(matrix: Matrix?) {
         this.localMatrix = matrix
+    }
+
+    fun updateGradientPositions(positions: FloatArray) {
+        this.gradientPositions = positions
+    }
+
+    fun updateGradientColors(colors: IntArray) {
+        this.gradientColors = colors
     }
 }
