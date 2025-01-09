@@ -110,6 +110,12 @@ This document serves as a reference for the available methods to update and cust
 - **`updateGradientColor(startColor: Int, endColor: Int)`**  
   Updates the gradient color with two colors: start and end.
 
+- **`updateGradientColors(colors: IntArray)`**  
+  Updates the colors of the gradient.
+
+- **`updateGradientPositions(positions: FloatArray)`**  
+  Updates the positions of the gradient.
+
 - **`updateGradientAngle(angle: Int)`**  
   Updates the angle of the gradient.
 
@@ -127,6 +133,12 @@ This document serves as a reference for the available methods to update and cust
 
 - **`updateStrokeGradientColor(startColor: Int, endColor: Int)`**  
   Updates the stroke's gradient color with two colors.
+
+- **`updateStrokeGradientColors(colors: IntArray)`**  
+  Updates the stroke's gradient colors.
+
+- **`updateStrokeGradientPositions(positions: FloatArray)`**  
+  Updates the stroke's gradient positions.
 
 - **`updateStrokeGradientAngle(angle: Int)`**  
   Updates the stroke's gradient angle.
@@ -176,6 +188,7 @@ view.updateGradientColor(Color.BLUE, Color.GREEN)
 
 License
 ```
+License
 Copyright 2021 Jong Heon Son (sonsation)
 
 Licensed under the Apache License, Version 2.0 (the "License");
