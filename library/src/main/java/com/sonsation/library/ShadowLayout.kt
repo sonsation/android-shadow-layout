@@ -503,18 +503,23 @@ class ShadowLayout : FrameLayout {
         invalidate()
     }
 
-    fun updateGradientColors(colors: IntArray) {
+    fun updateGradientColors(colors: IntArray?) {
         this.gradient?.updateGradientColors(colors)
         invalidate()
     }
 
-    fun updateGradientPositions(positions: FloatArray) {
+    fun updateGradientPositions(positions: FloatArray?) {
         this.gradient?.gradientPositions = positions
         invalidate()
     }
 
     fun updateLocalMatrix(matrix: Matrix?) {
         this.gradient?.updateLocalMatrix(matrix)
+        invalidate()
+    }
+
+    fun updateGradientShader(shader: LinearGradient?) {
+        gradient?.updateGradientShader(shader)
         invalidate()
     }
 
@@ -543,18 +548,23 @@ class ShadowLayout : FrameLayout {
         invalidate()
     }
 
-    fun updateStrokeGradientColors(colors: IntArray) {
+    fun updateStrokeGradientColors(colors: IntArray?) {
         this.strokeGradient?.updateGradientColors(colors)
         invalidate()
     }
 
-    fun updateStrokeGradientPositions(positions: FloatArray) {
+    fun updateStrokeGradientPositions(positions: FloatArray?) {
         this.strokeGradient?.updateGradientPositions(positions)
         invalidate()
     }
 
     fun updateStrokeLocalMatrix(matrix: Matrix?) {
         this.strokeGradient?.updateLocalMatrix(matrix)
+        invalidate()
+    }
+
+    fun updateStrokeGradientShader(shader: LinearGradient?) {
+        this.strokeGradient?.updateGradientShader(shader)
         invalidate()
     }
 
