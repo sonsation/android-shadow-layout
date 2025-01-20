@@ -19,9 +19,53 @@ dependencies {
 
 # Custom View Background and Styling Methods Reference
 
-This document serves as a reference for the available methods to update and customize the background, radius, shadows, stroke, and gradient of a custom view.
+This document serves as a reference for the available methods to update and customize the background, radius, shadows, stroke, and gradient of a custom view.  
 
 ## 1. Background Customization
+
+```xml
+<com.sonsation.library.ShadowLayout
+    android:id="@+id/shadow_layout"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:padding="10dp"
+    app:background_color="#c8c8c8"
+    app:background_radius="10dp"
+    app:background_top_left_radius="10dp"
+    app:background_top_right_radius="10dp"
+    app:background_bottom_left_radius="10dp"
+    app:background_bottom_right_radius="10dp"
+    app:background_blur="10dp"
+    app:background_blur_type="INNER"
+    app:background_radius_half="true">
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="The early bird catches the worm."/>
+
+</com.sonsation.library.ShadowLayout>
+```
+
+<p align="center"><img src="https://github.com/user-attachments/assets/ea2bde0d-06f3-46d3-ac91-3cc06e305ccd" width="400px"></p>
+
+
+## Attributes
+
+| Attribute                        | Description                                                                 |
+|----------------------------------|-----------------------------------------------------------------------------|
+| `app:background_color`           | Background color of the view. Example: `#c8c8c8`.                          |
+| `app:background_radius`          | Radius for all corners. Example: `10dp`.                                   |
+| `app:background_top_left_radius` | Radius for the top-left corner. Example: `10dp`.                           |
+| `app:background_top_right_radius`| Radius for the top-right corner. Example: `10dp`.                          |
+| `app:background_bottom_left_radius` | Radius for the bottom-left corner. Example: `10dp`.                     |
+| `app:background_bottom_right_radius`| Radius for the bottom-right corner. Example: `10dp`.                   |
+| `app:background_blur`            | Blur radius applied to the background. Example: `10dp`.                    |
+| `app:background_blur_type`       | Type of blur effect. Options: `INNER`, `OUTER`, `SOLID`. Example: `INNER`.          |
+| `app:background_radius_half`     | If `true`, sets the radius to half of the view's size for rounded effect.   |
+  
+
+## Reference
 
 - **`updateBackgroundColor(color: Int)`**  
   Updates the background color of the view.
@@ -44,6 +88,45 @@ This document serves as a reference for the available methods to update and cust
 ---
 
 ## 2. Shadow Customization
+
+```xml
+<com.sonsation.library.ShadowLayout
+    android:id="@+id/shadow_layout"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:padding="10dp"
+    app:shadow_blur="10dp"
+    app:shadow_spread="10dp"
+    app:shadow_color="#c8c8c8"
+    app:shadow_offset_x="4dp"
+    app:shadow_offset_y="4dp"
+    app:shadow_array="{10,0,4,10,#c8c8c8}">
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="The early bird catches the worm."/>
+
+</com.sonsation.library.ShadowLayout>
+```
+
+<p align="center"><img src="https://github.com/user-attachments/assets/2dd83e3b-14bb-4cc2-8d01-540b2f218848" width="400px"></p>
+
+## Attributes
+| Attribute              | Description                                                                                   |
+|------------------------|-----------------------------------------------------------------------------------------------|
+| `app:shadow_blur`      | The blur radius of the shadow. Example: `10dp`.                                               |
+| `app:shadow_spread`    | The spread radius of the shadow, controlling its expansion or contraction. Example: `10dp`.   |
+| `app:shadow_color`     | The color of the shadow. Example: `#c8c8c8`.                                                  |
+| `app:shadow_offset_x`  | Horizontal offset of the shadow. Example: `4dp`.                                              |
+| `app:shadow_offset_y`  | Vertical offset of the shadow. Example: `4dp`.                                                |
+| `app:shadow_array`     | Allows configuring multiple shadows with a single attribute. Format: `{radius, offset_x, offset_y, spread, color}`. |
+
+### Shadow Array Format
+The `app:shadow_array` attribute allows you to define one or more shadow configurations. Each shadow is specified as:
+app:shadow_array="{10,0,4,10,#c8c8c8}, {10,0,4,10,#000000}"
+
+## Reference
 
 - **`addBackgroundShadow(blurSize: Float, offsetX: Float, offsetY: Float, shadowColor: Int)`**  
   Adds a shadow with specified blur size, offset, and color.
@@ -85,6 +168,50 @@ This document serves as a reference for the available methods to update and cust
 
 ## 3. Stroke Customization
 
+```xml
+<com.sonsation.library.ShadowLayout
+    android:id="@+id/shadow_layout"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:padding="10dp"
+    app:stroke_color="#c8c8c8"
+    app:stroke_width="4dp"
+    app:stroke_type="INSIDE"
+    app:stroke_blur="10dp"
+    app:stroke_blur_type="INNER">
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="The early bird catches the worm."/>
+
+</com.sonsation.library.ShadowLayout>
+```
+
+<p align="center"><img src="https://github.com/user-attachments/assets/140b3bef-92b0-47f7-9ccf-0cb85cf54c2d" width="400px"></p>
+
+## Attributes
+
+| Attribute            | Description                                                                                      |
+|----------------------|--------------------------------------------------------------------------------------------------|
+| `app:stroke_color`   | The color of the stroke. Supports any valid color value, such as HEX codes. Example: `#c8c8c8`.   |
+| `app:stroke_width`   | The width of the stroke in density-independent pixels (dp). Example: `4dp`.                       |
+| `app:stroke_type`    | Defines where the stroke is drawn relative to the view boundary. Options: `INSIDE`, `CENTER`, `OUTSIDE`. Default: `CENTER`. |
+| `app:stroke_blur`    | The blur radius applied to the stroke. Example: `10dp`.                                           |
+| `app:stroke_blur_type` | Type of blur applied to the stroke. Options: `INNER`, `OUTER`, `SOLID`. Default: `INNER`.          |
+
+### Stroke Type
+- **INSIDE**: The stroke is drawn inside the view boundary, reducing the available space for the content.  
+- **CENTER**: The stroke is drawn evenly across the boundary edge (default).  
+- **OUTSIDE**: The stroke is drawn outside the view boundary, extending outward.  
+
+### Stroke Blur Type
+- **INNER**: The blur is applied inside the stroke, making the outer edges sharp.  
+- **OUTER**: The blur is applied outside the stroke, softening the outer edges.  
+- **SOLID**: A solid stroke without any blur effect.
+
+## Reference
+
 - **`updateStrokeWidth(strokeWidth: Float)`**  
   Updates the width of the stroke.
 
@@ -103,6 +230,80 @@ This document serves as a reference for the available methods to update and cust
 ---
 
 ## 4. Gradient Customization
+
+```xml
+<com.sonsation.library.ShadowLayout
+    android:id="@+id/shadow_layout"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:padding="10dp"
+    app:gradient_angle="45"
+    app:gradient_start_color="#ffffff"
+    app:gradient_center_color="#c8c8c8"
+    app:gradient_end_color="#000000"
+    app:gradient_offset_x="4dp"
+    app:gradient_offset_y="4dp">
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="The early bird catches the worm."/>
+
+</com.sonsation.library.ShadowLayout>
+```
+
+<p align="center"><img src="https://github.com/user-attachments/assets/2724990b-d4ef-4b32-9fb7-7dd6faf88f05" width="400px"></p>
+
+## Attributes
+
+| Attribute                 | Description                                                                                             |
+|---------------------------|---------------------------------------------------------------------------------------------------------|
+| `app:gradient_angle`       | The angle of the gradient in degrees. Example: `45`.                                                     |
+| `app:gradient_start_color` | The start color of the gradient. Example: `#ffffff`.                                                     |
+| `app:gradient_center_color`| The center color of the gradient, if applicable. Example: `#c8c8c8`.                                      |
+| `app:gradient_end_color`   | The end color of the gradient. Example: `#000000`.                                                       |
+| `app:gradient_offset_x`    | The horizontal offset of the gradient. Example: `4dp`.                                                   |
+| `app:gradient_offset_y`    | The vertical offset of the gradient. Example: `4dp`.                                                     |
+
+```xml
+<com.sonsation.library.ShadowLayout
+    android:id="@+id/shadow_layout"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:padding="10dp"
+    app:stroke_width="10dp"
+    app:stroke_color="#000000"
+    app:stroke_gradient_angle="45"
+    app:stroke_gradient_start_color="#ffffff"
+    app:stroke_gradient_center_color="#c8c8c8"
+    app:stroke_gradient_end_color="#000000"
+    app:stroke_gradient_offset_x="4dp"
+    app:stroke_gradient_offset_y="4dp">
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="The early bird catches the worm."/>
+
+</com.sonsation.library.ShadowLayout>
+```
+
+<p align="center"><img src="https://github.com/user-attachments/assets/bfd81f1f-03c4-4470-a23e-2bee7560df00" width="400px"></p>
+
+## Attributes
+
+| Attribute                          | Description                                                                                   |
+|------------------------------------|-----------------------------------------------------------------------------------------------|
+| `app:stroke_width`                 | The width of the stroke in density-independent pixels (dp). Example: `10dp`.                   |
+| `app:stroke_color`                 | The color of the stroke. Supports any valid color value, such as HEX codes. Example: `#000000`. |
+| `app:stroke_gradient_angle`        | The angle of the stroke gradient in degrees. Example: `45`.                                    |
+| `app:stroke_gradient_start_color`  | The start color of the stroke gradient. Example: `#ffffff`.                                    |
+| `app:stroke_gradient_center_color` | The center color of the stroke gradient, if applicable. Example: `#c8c8c8`.                    |
+| `app:stroke_gradient_end_color`    | The end color of the stroke gradient. Example: `#000000`.                                      |
+| `app:stroke_gradient_offset_x`     | The horizontal offset of the stroke gradient. Example: `4dp`.                                  |
+| `app:stroke_gradient_offset_y`     | The vertical offset of the stroke gradient. Example: `4dp`.  
+
+## Reference 
 
 - **`updateGradientColor(startColor: Int, centerColor: Int, endColor: Int)`**  
   Updates the gradient color with three colors: start, center, and end.
@@ -192,7 +393,7 @@ view.updateStrokeWidth(4f)
 view.updateGradientColor(Color.BLUE, Color.GREEN)
 ```
 
-License
+## License
 ```
 License
 Copyright 2021 Jong Heon Son (sonsation)
