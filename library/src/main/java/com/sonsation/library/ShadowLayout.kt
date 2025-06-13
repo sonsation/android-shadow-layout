@@ -277,14 +277,9 @@ class ShadowLayout : FrameLayout {
         if (stroke?.isEnable == true) {
 
             if (stroke?.drawAsOverlay == true) {
-
-                if (clipOutLine) {
-                    canvas.clipPath(outlinePath)
-                }
-
-                super.dispatchDraw(canvas)
-
                 canvas.drawPath(outlinePath, outlinePaint)
+                canvas.clipPath(backgroundPath)
+                super.dispatchDraw(canvas)
                 return
             } else {
                 canvas.drawPath(outlinePath, outlinePaint)
