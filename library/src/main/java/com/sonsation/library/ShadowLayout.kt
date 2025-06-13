@@ -122,6 +122,7 @@ class ShadowLayout : FrameLayout {
                     )
                 } ?: BlurMaskFilter.Blur.NORMAL
                 this.blur = a.getDimension(R.styleable.ShadowLayout_stroke_blur, 0f)
+                this.drawAsOverlay = a.getBoolean(R.styleable.ShadowLayout_stroke_draw_as_overlay, false)
             }
 
             val allRadius = a.getDimension(R.styleable.ShadowLayout_background_radius, 0f)
@@ -274,7 +275,20 @@ class ShadowLayout : FrameLayout {
         canvas.drawPath(backgroundPath, backgroundPaint)
 
         if (stroke?.isEnable == true) {
-            canvas.drawPath(outlinePath, outlinePaint)
+
+            if (stroke?.drawAsOverlay == true) {
+
+                if (clipOutLine) {
+                    canvas.clipPath(outlinePath)
+                }
+
+                super.dispatchDraw(canvas)
+
+                canvas.drawPath(outlinePath, outlinePaint)
+                return
+            } else {
+                canvas.drawPath(outlinePath, outlinePaint)
+            }
         }
 
         if (clipOutLine) {
@@ -600,6 +614,11 @@ class ShadowLayout : FrameLayout {
 
     fun updateStrokeBlurType(blurType: BlurMaskFilter.Blur) {
         this.stroke?.blurType = blurType
+        invalidate()
+    }
+
+    fun updateStrokeDrawAsOverlay(drawAsOverlay: Boolean) {
+        this.stroke?.drawAsOverlay = drawAsOverlay
         invalidate()
     }
 

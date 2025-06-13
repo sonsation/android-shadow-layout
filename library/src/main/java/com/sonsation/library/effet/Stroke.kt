@@ -10,6 +10,7 @@ class Stroke(var strokeWidth: Float = 0f,
              var strokeType: StrokeType = StrokeType.INSIDE
     ) {
 
+    var drawAsOverlay = false
     var blur: Float = 0f
     var blurType = BlurMaskFilter.Blur.NORMAL
     val isEnable: Boolean

@@ -44,6 +44,7 @@
             <enum name="CENTER" value="1"/>
             <enum name="OUTSIDE" value="2"/>
         </attr>
+        <attr name="stroke_draw_as_overlay" format="boolean"/>
 
         <attr name="shadow_color" format="color" />
         <attr name="shadow_offset_x" format="dimension" />
