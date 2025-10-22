@@ -413,6 +413,25 @@ class MainActivity : AppCompatActivity() {
             })
         }
 
+        bind.strokeAlphaSeekbar.apply {
+            min = 0
+            max = 100
+            setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                    shadowLayout.updateStrokeAlpha(progress)
+                    bind.strokeAlphaValue.text = "${progress}"
+                }
+
+                override fun onStartTrackingTouch(seekBar: SeekBar?) {
+
+                }
+
+                override fun onStopTrackingTouch(seekBar: SeekBar?) {
+
+                }
+            })
+        }
+
         bind.strokeBlurTypeSeekbar.apply {
             min = 0
             max = 4
