@@ -22,6 +22,7 @@
             <enum name="INNER" value="3"/>
         </attr>
 
+        <attr name="stroke_alpha" format="integer" />
         <attr name="stroke_width" format="dimension" />
         <attr name="stroke_color" format="color" />
         <attr name="stroke_gradient_start_color" format="color"/>
