@@ -178,7 +178,8 @@ app:shadow_array="{10,0,4,10,#c8c8c8}, {10,0,4,10,#000000}"
     app:stroke_width="4dp"
     app:stroke_type="INSIDE"
     app:stroke_blur="10dp"
-    app:stroke_blur_type="INNER">
+    app:stroke_blur_type="INNER"
+    app:stroke_alpha="100">
 
     <androidx.appcompat.widget.AppCompatTextView
         android:layout_width="wrap_content"
@@ -192,13 +193,14 @@ app:shadow_array="{10,0,4,10,#c8c8c8}, {10,0,4,10,#000000}"
 
 ## Attributes
 
-| Attribute            | Description                                                                                      |
-|----------------------|--------------------------------------------------------------------------------------------------|
-| `app:stroke_color`   | The color of the stroke. Supports any valid color value, such as HEX codes. Example: `#c8c8c8`.   |
-| `app:stroke_width`   | The width of the stroke in density-independent pixels (dp). Example: `4dp`.                       |
-| `app:stroke_type`    | Defines where the stroke is drawn relative to the view boundary. Options: `INSIDE`, `CENTER`, `OUTSIDE`. Default: `CENTER`. |
-| `app:stroke_blur`    | The blur radius applied to the stroke. Example: `10dp`.                                           |
-| `app:stroke_blur_type` | Type of blur applied to the stroke. Options: `INNER`, `OUTER`, `SOLID`. Default: `INNER`.          |
+| Attribute              | Description                                                                                                  |
+|------------------------|--------------------------------------------------------------------------------------------------------------|
+| `app:stroke_color`     | The color of the stroke. Supports any valid color value, such as HEX codes. Example: `#c8c8c8`.              |
+| `app:stroke_width`     | The width of the stroke in density-independent pixels (dp). Example: `4dp`.                                  |
+| `app:stroke_type`      | Defines where the stroke is drawn relative to the view boundary. Options: `INSIDE`, `CENTER`, `OUTSIDE`. Default: `CENTER`. |
+| `app:stroke_blur`      | The blur radius applied to the stroke. Example: `10dp`.                                                      |
+| `app:stroke_blur_type` | Type of blur applied to the stroke. Options: `INNER`, `OUTER`, `SOLID`. Default: `INNER`.                    |
+| `app:stroke_alpha`     | The transparency level of the stroke, ranging from `0` (completely transparent) to `100` (fully opaque). Default: `100`. |
 
 ### Stroke Type
 - **INSIDE**: The stroke is drawn inside the view boundary, reducing the available space for the content.  
@@ -226,6 +228,9 @@ app:shadow_array="{10,0,4,10,#c8c8c8}, {10,0,4,10,#000000}"
 
 - **`updateStrokeBlurType(blurType: BlurMaskFilter.Blur)`**  
   Defines the type of blur effect for the stroke.
+
+- **`updateStrokeAlpha(alpha: Int)`**  
+  Sets the transparency level of the stroke. Accepts a value between `0` (fully transparent) and `100` (fully opaque).
 
 ---
 
