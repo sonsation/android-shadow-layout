@@ -7,7 +7,8 @@ import com.sonsation.library.utils.ViewHelper
 
 class Stroke(var strokeWidth: Float = 0f,
              var strokeColor: Int = ViewHelper.NOT_SET_COLOR,
-             var strokeType: StrokeType = StrokeType.INSIDE
+             var strokeType: StrokeType = StrokeType.INSIDE,
+             var strokeAlpha: Int = 100
     ) {
 
     var drawAsOverlay = false
@@ -22,5 +23,9 @@ class Stroke(var strokeWidth: Float = 0f,
 
     fun updateStrokeColor(color: Int) {
         this.strokeColor = color
+    }
+
+    fun updateStrokeAlpha(alpha: Int) {
+        this.strokeAlpha = alpha
     }
 }

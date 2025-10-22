@@ -626,6 +626,11 @@ class ShadowLayout : FrameLayout {
         }
     }
 
+    fun updateStrokeAlpha(alpha: Int) {
+        this.stroke?.strokeAlpha = alpha
+        invalidate()
+    }
+
     fun getGradientInfo(): Gradient? {
         return this.gradient
     }
@@ -729,6 +734,7 @@ class ShadowLayout : FrameLayout {
                 }
                 style = Paint.Style.STROKE
                 color = targetColor
+                alpha = stroke!!.strokeAlpha
                 strokeWidth = stroke!!.strokeWidth
                 shader = if (strokeGradient?.isEnable == true) {
                     strokeGradient?.getGradientShader(
