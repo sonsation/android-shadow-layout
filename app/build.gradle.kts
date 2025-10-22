@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "com.sonsation.shadowlayout"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.sonsation.shadowlayout"
