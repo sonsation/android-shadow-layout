@@ -114,7 +114,7 @@ class ShadowLayout : FrameLayout {
                         StrokeType.INSIDE.type
                     )
                 } ?: StrokeType.INSIDE,
-                strokeAlpha = a.getInteger(R.styleable.ShadowLayout_stroke_alpha, 100)
+                strokeAlpha = a.getInteger(R.styleable.ShadowLayout_stroke_alpha, 255)
             ).apply {
                 this.blurType = BlurMaskFilter.Blur.entries.find {
                     it.ordinal == a.getInteger(
