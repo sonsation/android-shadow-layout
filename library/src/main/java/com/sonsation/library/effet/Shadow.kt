@@ -49,10 +49,10 @@ class Shadow(
         path.apply {
             reset()
 
-            if (radius == null) {
-                addRect(rect, Path.Direction.CW)
-            } else {
+            if (radius?.isEnable == true) {
                 addSmoothRoundRect(rect, radius)
+            } else {
+                addRect(rect, Path.Direction.CW)
             }
 
             close()
