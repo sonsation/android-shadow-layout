@@ -66,6 +66,7 @@ This document serves as a reference for the available methods to update and cust
 | `app:background_radius_half`     | If `true`, sets the radius to half of the view's size for rounded effect.   |
 | `app:background_corner_smoothing`| Smooths the corners to create a continuous, squircle-like shape (Figma style). Range `0.0` to `1.0`. Default: `0.0`. |
 | `app:background_radius_weight`   | Weight multiplier applied to the corner radius. Default: `1.0`.            |
+| `app:shadow_render_mode`         | Rendering optimization mode. Options: `DEFAULT`, `BITMAP_CACHE`, `HARDWARE_LAYER`. Default: `DEFAULT`. |
   
 
 ## Reference
