@@ -2,6 +2,7 @@ package com.sonsation.library.effet
 
 import android.graphics.*
 import com.sonsation.library.utils.ViewHelper
+import com.sonsation.library.utils.addSmoothRoundRect
 
 class Shadow(
     var blurSize: Float = 0f,
@@ -51,8 +52,7 @@ class Shadow(
             if (radius == null) {
                 addRect(rect, Path.Direction.CW)
             } else {
-                val height = rect.height()
-                addRoundRect(rect, radius.getRadiusArray(height), Path.Direction.CW)
+                addSmoothRoundRect(rect, radius)
             }
 
             close()

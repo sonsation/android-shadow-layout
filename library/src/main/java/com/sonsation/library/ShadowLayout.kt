@@ -9,6 +9,7 @@ import com.sonsation.library.model.Padding
 import com.sonsation.library.model.StrokeType
 import com.sonsation.library.utils.ViewHelper
 import com.sonsation.library.utils.ViewHelper.getInnerPath
+import com.sonsation.library.utils.addSmoothRoundRect
 import kotlin.math.abs
 
 
@@ -129,6 +130,7 @@ class ShadowLayout : FrameLayout {
             val allRadius = a.getDimension(R.styleable.ShadowLayout_background_radius, 0f)
             val radiusHalf = a.getBoolean(R.styleable.ShadowLayout_background_radius_half, false)
             val radiusWeight = a.getFloat(R.styleable.ShadowLayout_background_radius_weight, 1f)
+            val cornerSmoothing = a.getFloat(R.styleable.ShadowLayout_background_corner_smoothing, 0f)
 
             radius = if (allRadius == 0f) {
                 val topLeftRadius =
@@ -143,11 +145,13 @@ class ShadowLayout : FrameLayout {
                 Radius(topLeftRadius, topRightRadius, bottomLeftRadius, bottomRightRadius).apply {
                     this.radiusHalf = radiusHalf
                     this.radiusWeight = radiusWeight
+                    this.cornerSmoothing = cornerSmoothing
                 }
             } else {
                 Radius(allRadius).apply {
                     this.radiusHalf = radiusHalf
                     this.radiusWeight = radiusWeight
+                    this.cornerSmoothing = cornerSmoothing
                 }
             }
 
@@ -322,6 +326,11 @@ class ShadowLayout : FrameLayout {
 
     fun updateRadius(topLeft: Float, topRight: Float, bottomLeft: Float, bottomRight: Float) {
         this.radius?.updateRadius(topLeft, topRight, bottomLeft, bottomRight)
+        invalidate()
+    }
+
+    fun updateCornerSmoothing(smoothing: Float) {
+        this.radius?.cornerSmoothing = smoothing
         invalidate()
     }
 
@@ -777,8 +786,7 @@ class ShadowLayout : FrameLayout {
             reset()
 
             if (radius?.isEnable == true) {
-                val height = outlineRect.height()
-                addRoundRect(outlineRect, radius!!.getRadiusArray(height), Path.Direction.CW)
+                addSmoothRoundRect(outlineRect, radius!!)
             } else {
                 addRect(outlineRect, Path.Direction.CW)
             }
@@ -799,8 +807,7 @@ class ShadowLayout : FrameLayout {
             } else {
                 targetRect.set(outlineRect)
                 if (radius?.isEnable == true) {
-                    val height = outlineRect.height()
-                    addRoundRect(outlineRect, radius!!.getRadiusArray(height), Path.Direction.CW)
+                    addSmoothRoundRect(outlineRect, radius!!)
                 } else {
                     addRect(outlineRect, Path.Direction.CW)
                 }

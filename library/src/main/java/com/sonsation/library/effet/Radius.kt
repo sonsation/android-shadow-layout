@@ -14,6 +14,7 @@ class Radius(
 
     var radiusHalf = false
     var radiusWeight = 1f
+    var cornerSmoothing = 0f
 
     fun updateRadius(radius: Float) {
         this.topLeftRadius = radius
@@ -51,25 +52,6 @@ class Radius(
         } else {
             bottomRightRadius * radiusWeight
         }
-
-        return floatArrayOf(
-            targetTopLeftRadius,
-            targetTopLeftRadius,
-            targetTopRightRadius,
-            targetTopRightRadius,
-            targetBottomRightRadius,
-            targetBottomRightRadius,
-            targetBottomLeftRadius,
-            targetBottomLeftRadius
-        )
-    }
-
-    fun getRadiusArray(): FloatArray {
-
-        val targetTopLeftRadius = topLeftRadius * radiusWeight
-        val targetTopRightRadius = topRightRadius * radiusWeight
-        val targetBottomLeftRadius = bottomLeftRadius * radiusWeight
-        val targetBottomRightRadius = bottomRightRadius * radiusWeight
 
         return floatArrayOf(
             targetTopLeftRadius,

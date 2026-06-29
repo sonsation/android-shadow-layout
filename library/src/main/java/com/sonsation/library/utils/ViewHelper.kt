@@ -208,3 +208,134 @@ object ViewHelper {
         }
     }
 }
+
+enum class Corner {
+    TOP_LEFT, TOP_RIGHT, BOTTOM_RIGHT, BOTTOM_LEFT
+}
+
+fun Path.addSmoothRoundRect(rect: RectF, radius: Radius) {
+    reset()
+
+    val smoothing = radius.cornerSmoothing.coerceIn(0f, 1f)
+    if (smoothing == 0f) {
+        val height = rect.height()
+        addRoundRect(rect, radius.getRadiusArray(height), Path.Direction.CW)
+        return
+    }
+
+    val width = rect.width()
+    val height = rect.height()
+    val maxRadius = minOf(width, height) / 2f
+
+    val tl = minOf(radius.topLeftRadius * radius.radiusWeight, maxRadius)
+    val tr = minOf(radius.topRightRadius * radius.radiusWeight, maxRadius)
+    val br = minOf(radius.bottomRightRadius * radius.radiusWeight, maxRadius)
+    val bl = minOf(radius.bottomLeftRadius * radius.radiusWeight, maxRadius)
+
+    val tlOffset = getCornerOffset(tl, smoothing, maxRadius)
+    moveTo(rect.left + tlOffset, rect.top)
+
+    val trOffset = getCornerOffset(tr, smoothing, maxRadius)
+    lineTo(rect.right - trOffset, rect.top)
+    drawSmoothCorner(
+        rect.right, rect.top,
+        tr, trOffset,
+        Corner.TOP_RIGHT
+    )
+
+    val brOffset = getCornerOffset(br, smoothing, maxRadius)
+    lineTo(rect.right, rect.bottom - brOffset)
+    drawSmoothCorner(
+        rect.right, rect.bottom,
+        br, brOffset,
+        Corner.BOTTOM_RIGHT
+    )
+
+    val blOffset = getCornerOffset(bl, smoothing, maxRadius)
+    lineTo(rect.left + blOffset, rect.bottom)
+    drawSmoothCorner(
+        rect.left, rect.bottom,
+        bl, blOffset,
+        Corner.BOTTOM_LEFT
+    )
+
+    lineTo(rect.left, rect.top + tlOffset)
+    drawSmoothCorner(
+        rect.left, rect.top,
+        tl, tlOffset,
+        Corner.TOP_LEFT
+    )
+
+    close()
+}
+
+private fun getCornerOffset(radius: Float, smoothing: Float, maxOffset: Float): Float {
+    return minOf(radius * (1f + smoothing * 0.5286f), maxOffset)
+}
+
+private fun Path.drawSmoothCorner(
+    cornerX: Float, cornerY: Float,
+    radius: Float, offset: Float,
+    corner: Corner
+) {
+    if (radius <= 0f) {
+        lineTo(cornerX, cornerY)
+        return
+    }
+
+    val p = offset
+    val m = radius * 0.2928932f
+    val c_a = radius * 0.734784f
+    val k = radius * 0.187536f
+
+    when (corner) {
+        Corner.TOP_RIGHT -> {
+            cubicTo(
+                cornerX - c_a, cornerY,
+                cornerX - (m + k), cornerY + (m - k),
+                cornerX - m, cornerY + m
+            )
+            cubicTo(
+                cornerX - (m - k), cornerY + (m + k),
+                cornerX, cornerY + c_a,
+                cornerX, cornerY + p
+            )
+        }
+        Corner.BOTTOM_RIGHT -> {
+            cubicTo(
+                cornerX, cornerY - c_a,
+                cornerX - (m - k), cornerY - (m + k),
+                cornerX - m, cornerY - m
+            )
+            cubicTo(
+                cornerX - (m + k), cornerY - (m - k),
+                cornerX - c_a, cornerY,
+                cornerX - p, cornerY
+            )
+        }
+        Corner.BOTTOM_LEFT -> {
+            cubicTo(
+                cornerX + c_a, cornerY,
+                cornerX + (m + k), cornerY - (m - k),
+                cornerX + m, cornerY - m
+            )
+            cubicTo(
+                cornerX + (m - k), cornerY - (m + k),
+                cornerX, cornerY - c_a,
+                cornerX, cornerY - p
+            )
+        }
+        Corner.TOP_LEFT -> {
+            cubicTo(
+                cornerX, cornerY + c_a,
+                cornerX + (m - k), cornerY + (m + k),
+                cornerX + m, cornerY + m
+            )
+            cubicTo(
+                cornerX + (m + k), cornerY + (m - k),
+                cornerX + c_a, cornerY,
+                cornerX + p, cornerY
+            )
+        }
+    }
+}

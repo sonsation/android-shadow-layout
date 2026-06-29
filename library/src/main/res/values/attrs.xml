@@ -8,6 +8,7 @@
         <attr name="background_radius_weight" format="float" />
         <attr name="background_radius" format="dimension" />
         <attr name="background_radius_half" format="boolean" />
+        <attr name="background_corner_smoothing" format="float" />
         <attr name="background_top_left_radius" format="dimension" />
         <attr name="background_top_right_radius" format="dimension" />
         <attr name="background_bottom_left_radius" format="dimension" />
