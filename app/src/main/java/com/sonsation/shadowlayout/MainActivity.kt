@@ -225,6 +225,21 @@ class MainActivity : AppCompatActivity() {
             })
         }
 
+        bind.backgroundCornerSmoothingSeekbar.apply {
+            min = 0
+            max = 100
+            setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                    val smoothing = progress.toFloat() / 100f
+                    shadowLayout.updateCornerSmoothing(smoothing)
+                    bind.backgroundCornerSmoothingValue.text = String.format("%.2f", smoothing)
+                }
+
+                override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+                override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+            })
+        }
+
         bind.gradientXSeekbar.apply {
             min = -200
             max = 200

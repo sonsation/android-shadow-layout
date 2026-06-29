@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#ffffff">
+    android:background="#000000">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/shadow_layout_container"
@@ -14,27 +14,17 @@
         android:clipToPadding="false"
         android:paddingBottom="40dp"
         android:paddingTop="60dp"
-        android:background="#ffffff"
+        android:background="#000000"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <com.sonsation.library.ShadowLayout
             android:id="@+id/shadow_layout"
-            android:layout_width="100dp"
+            android:layout_width="0dp"
             android:layout_height="100dp"
-            android:padding="10dp"
-            app:clipToOutline="true"
+            android:layout_marginHorizontal="20dp"
             app:background_color="#8d00af"
-            app:stroke_color="#193C8A"
-            app:shadow_spread="10dp"
-            app:shadow_color="#bf000000"
-            app:gradient_end_color="#000000"
-            app:gradient_start_color="#ffffff"
-            app:stroke_gradient_start_color="#ffffff"
-            app:stroke_gradient_end_color="#FF0000"
-            app:stroke_width="10dp"
-            app:stroke_type="INSIDE"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"/>
@@ -536,6 +526,34 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
                         android:text="0dp"
+                        android:textColor="#000000"
+                        android:textSize="14sp"
+                        android:gravity="center" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginEnd="20dp"
+                        android:text="corner smoothing"
+                        android:textColor="#000000"
+                        android:textSize="14sp" />
+
+                    <SeekBar
+                        android:id="@+id/background_corner_smoothing_seekbar"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginEnd="20dp" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/background_corner_smoothing_value"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:text="0.0"
                         android:textColor="#000000"
                         android:textSize="14sp"
                         android:gravity="center" />
