@@ -217,20 +217,41 @@ fun Path.addSmoothRoundRect(rect: RectF, radius: Radius) {
     reset()
 
     val smoothing = radius.cornerSmoothing.coerceIn(0f, 1f)
+    val height = rect.height()
+
     if (smoothing == 0f) {
-        val height = rect.height()
         addRoundRect(rect, radius.getRadiusArray(height), Path.Direction.CW)
         return
     }
 
+    val targetTopLeftRadius = if (radius.radiusHalf) {
+        height.div(2f)
+    } else {
+        radius.topLeftRadius * radius.radiusWeight
+    }
+    val targetTopRightRadius = if (radius.radiusHalf) {
+        height.div(2f)
+    } else {
+        radius.topRightRadius * radius.radiusWeight
+    }
+    val targetBottomLeftRadius = if (radius.radiusHalf) {
+        height.div(2f)
+    } else {
+        radius.bottomLeftRadius * radius.radiusWeight
+    }
+    val targetBottomRightRadius = if (radius.radiusHalf) {
+        height.div(2f)
+    } else {
+        radius.bottomRightRadius * radius.radiusWeight
+    }
+
     val width = rect.width()
-    val height = rect.height()
     val maxRadius = minOf(width, height) / 2f
 
-    val tl = minOf(radius.topLeftRadius * radius.radiusWeight, maxRadius)
-    val tr = minOf(radius.topRightRadius * radius.radiusWeight, maxRadius)
-    val br = minOf(radius.bottomRightRadius * radius.radiusWeight, maxRadius)
-    val bl = minOf(radius.bottomLeftRadius * radius.radiusWeight, maxRadius)
+    val tl = minOf(targetTopLeftRadius, maxRadius)
+    val tr = minOf(targetTopRightRadius, maxRadius)
+    val br = minOf(targetBottomRightRadius, maxRadius)
+    val bl = minOf(targetBottomLeftRadius, maxRadius)
 
     val tlOffset = getCornerOffset(tl, smoothing, maxRadius)
     moveTo(rect.left + tlOffset, rect.top)
