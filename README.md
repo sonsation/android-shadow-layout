@@ -13,7 +13,7 @@ and:
 
 ```gradle
 dependencies {
-    compile 'com.github.sonsation:shadow-layout:${version}'
+    implementation 'com.github.sonsation:shadow-layout:${version}'
 }
 ```
 
@@ -37,7 +37,8 @@ This document serves as a reference for the available methods to update and cust
     app:background_bottom_right_radius="10dp"
     app:background_blur="10dp"
     app:background_blur_type="INNER"
-    app:background_radius_half="true">
+    app:background_radius_half="true"
+    app:background_corner_smoothing="0.6">
 
     <androidx.appcompat.widget.AppCompatTextView
         android:layout_width="wrap_content"
@@ -63,6 +64,8 @@ This document serves as a reference for the available methods to update and cust
 | `app:background_blur`            | Blur radius applied to the background. Example: `10dp`.                    |
 | `app:background_blur_type`       | Type of blur effect. Options: `INNER`, `OUTER`, `SOLID`. Example: `INNER`.          |
 | `app:background_radius_half`     | If `true`, sets the radius to half of the view's size for rounded effect.   |
+| `app:background_corner_smoothing`| Smooths the corners to create a continuous, squircle-like shape (Figma style). Range `0.0` to `1.0`. Default: `0.0`. |
+| `app:background_radius_weight`   | Weight multiplier applied to the corner radius. Default: `1.0`.            |
   
 
 ## Reference
@@ -84,6 +87,9 @@ This document serves as a reference for the available methods to update and cust
 
 - **`updateBackgroundRadiusHalf(enable: Boolean)`**  
   Enables or disables the "half radius" effect on the background.
+
+- **`updateCornerSmoothing(smoothing: Float)`**  
+  Updates the corner smoothing ratio (0.0 to 1.0) to create a continuous corner (Squircle) effect similar to Figma or iOS.
 
 ---
 
@@ -379,14 +385,47 @@ app:shadow_array="{10,0,4,10,#c8c8c8}, {10,0,4,10,#000000}"
 
 ---
 
+## 6. DSL Builder Pattern (Performance Optimization)
+
+When updating multiple properties simultaneously (e.g., inside a `RecyclerView` or animation loop), using individual `update...()` methods triggers multiple unnecessary `invalidate()` passes. 
+
+To optimize rendering performance, use the Kotlin DSL `build { }` block. This allows you to lazily group all property changes and execute a single `invalidate()` call at the very end.
+
+```kotlin
+shadowLayout.build {
+    backgroundColor(Color.WHITE)
+    
+    radius {
+        updateRadius(20f)
+        cornerSmoothing = 0.6f
+    }
+    
+    stroke {
+        strokeWidth = 4f
+        strokeColor = Color.BLACK
+    }
+    
+    shadow(index = 0) { // Updates the first shadow safely without memory leaks
+        blurSize = 10f
+        shadowOffsetX = 5f
+        shadowOffsetY = 5f
+        shadowColor = Color.GRAY
+    }
+}
+```
+
+---
+
 ## Example Usage
 
+### Classic Updates (Single Property)
 ```kotlin
 // Set background color
 view.updateBackgroundColor(Color.RED)
 
-// Set corner radius
+// Set corner radius and continuous smoothing (Figma-style squircle)
 view.updateRadius(20f)
+view.updateCornerSmoothing(0.6f)
 
 // Add a shadow with blur and offset
 view.addBackgroundShadow(10f, 5f, 5f, Color.BLACK)
