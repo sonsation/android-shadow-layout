@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#000000">
+    android:background="#ffffff">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/shadow_layout_container"
@@ -14,7 +14,7 @@
         android:clipToPadding="false"
         android:paddingBottom="40dp"
         android:paddingTop="60dp"
-        android:background="#000000"
+        android:background="#ffffff"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -24,7 +24,7 @@
             android:layout_width="0dp"
             android:layout_height="100dp"
             android:layout_marginHorizontal="20dp"
-            app:background_color="#8d00af"
+            app:background_color="#938699"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"/>
