@@ -64,5 +64,12 @@
         <attr name="gradient_margin" format="dimension"/>
         <attr name="gradient_colors" format="string"/>
         <attr name="gradient_positions" format="string"/>
+
+        <!-- Render optimization mode -->
+        <attr name="shadow_render_mode" format="enum">
+            <enum name="DEFAULT" value="0"/>
+            <enum name="BITMAP_CACHE" value="1"/>
+            <enum name="HARDWARE_LAYER" value="2"/>
+        </attr>
     </declare-styleable>
 </resources>

@@ -14,6 +14,7 @@ class Shadow(
 
     private val paint by lazy { Paint() }
     private val path by lazy { Path() }
+    private val rect by lazy { RectF() }
 
     val isEnable: Boolean
         get() = (blurSize != 0f || shadowSpread != 0f) && shadowColor != ViewHelper.NOT_SET_COLOR
@@ -35,7 +36,7 @@ class Shadow(
 
     fun updatePath(offset: RectF, radius: Radius?) {
 
-        val rect = RectF(
+        rect.set(
             offset.left + shadowOffsetX,
             offset.top + shadowOffsetY,
             offset.right + shadowOffsetX,

@@ -47,6 +47,24 @@ class ShadowLayout : FrameLayout {
         Padding(0, 0, 0, 0)
     }
 
+    private val targetRect by lazy {
+        RectF()
+    }
+
+    companion object {
+        const val RENDER_MODE_DEFAULT = 0
+        const val RENDER_MODE_BITMAP_CACHE = 1
+        const val RENDER_MODE_HARDWARE_LAYER = 2
+    }
+
+    var renderMode = RENDER_MODE_DEFAULT
+        private set
+
+    private var cachedBitmap: Bitmap? = null
+    private var cacheCanvas: Canvas? = null
+
+    private var isPathDirty = true
+
     var autoAdjustPadding = false
         private set
     var backgroundColor = ViewHelper.NOT_SET_COLOR
@@ -105,6 +123,8 @@ class ShadowLayout : FrameLayout {
         try {
             autoAdjustPadding = a.getBoolean(R.styleable.ShadowLayout_autoAdjustPadding, false)
             clipOutLine = a.getBoolean(R.styleable.ShadowLayout_clipToOutline, false)
+            renderMode = a.getInt(R.styleable.ShadowLayout_shadow_render_mode, RENDER_MODE_DEFAULT)
+            applyRenderMode()
             stroke = Stroke(
                 strokeColor =
                 a.getColor(R.styleable.ShadowLayout_stroke_color, ViewHelper.NOT_SET_COLOR),
@@ -263,30 +283,141 @@ class ShadowLayout : FrameLayout {
         }
     }
 
-    override fun dispatchDraw(canvas: Canvas) {
+    fun updateRenderMode(mode: Int) {
+        renderMode = mode
+        applyRenderMode()
+        invalidate()
+    }
 
-        setOutlineAndBackground(layoutRect)
+    private fun applyRenderMode() {
+        if (renderMode == RENDER_MODE_HARDWARE_LAYER) {
+            setLayerType(LAYER_TYPE_HARDWARE, null)
+        } else {
+            setLayerType(LAYER_TYPE_NONE, null)
+        }
+    }
+
+    private var cacheOutsetLeft = 0f
+    private var cacheOutsetTop = 0f
+
+    private fun updateBitmapCache() {
+        val w = layoutRect.width()
+        val h = layoutRect.height()
+        if (w <= 0f || h <= 0f) return
+
+        var maxOutsetLeft = 0f
+        var maxOutsetTop = 0f
+        var maxOutsetRight = 0f
+        var maxOutsetBottom = 0f
+
+        shadows.forEach { shadow ->
+            if (shadow.isEnable) {
+                val spread = shadow.shadowSpread
+                val blur = shadow.blurSize
+                val ox = shadow.shadowOffsetX
+                val oy = shadow.shadowOffsetY
+
+                val leftBleed = (blur + spread) - ox
+                val rightBleed = (blur + spread) + ox
+                val topBleed = (blur + spread) - oy
+                val bottomBleed = (blur + spread) + oy
+
+                if (leftBleed > maxOutsetLeft) maxOutsetLeft = leftBleed
+                if (rightBleed > maxOutsetRight) maxOutsetRight = rightBleed
+                if (topBleed > maxOutsetTop) maxOutsetTop = topBleed
+                if (bottomBleed > maxOutsetBottom) maxOutsetBottom = bottomBleed
+            }
+        }
+
+        maxOutsetLeft += 2f
+        maxOutsetTop += 2f
+        maxOutsetRight += 2f
+        maxOutsetBottom += 2f
+
+        cacheOutsetLeft = maxOutsetLeft
+        cacheOutsetTop = maxOutsetTop
+
+        val cacheW = (w + maxOutsetLeft + maxOutsetRight).toInt()
+        val cacheH = (h + maxOutsetTop + maxOutsetBottom).toInt()
 
         try {
-            canvas.save()
+            if (cachedBitmap?.width != cacheW || cachedBitmap?.height != cacheH) {
+                cachedBitmap?.recycle()
+                cachedBitmap = Bitmap.createBitmap(cacheW, cacheH, Bitmap.Config.ARGB_8888)
+                cacheCanvas = Canvas(cachedBitmap!!)
+            }
+        } catch (e: OutOfMemoryError) {
+            renderMode = RENDER_MODE_DEFAULT
+            cachedBitmap = null
+            cacheCanvas = null
+            return
+        }
+
+        cachedBitmap!!.eraseColor(Color.TRANSPARENT)
+        
+        cacheCanvas?.let { cv ->
+            cv.save()
+            cv.translate(cacheOutsetLeft, cacheOutsetTop)
+            
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                canvas.clipOutPath(backgroundPath)
+                cv.clipOutPath(backgroundPath)
             } else {
                 @Suppress("DEPRECATION")
-                canvas.clipPath(backgroundPath, Region.Op.DIFFERENCE)
+                cv.clipPath(backgroundPath, Region.Op.DIFFERENCE)
             }
 
             shadows.forEach { shadow ->
-
-                shadow.updatePath(shadowRect, radius)
                 shadow.updatePaint()
-
                 if (shadow.isEnable) {
-                    shadow.draw(canvas)
+                    shadow.draw(cv)
                 }
             }
-        } finally {
-            canvas.restore()
+            cv.restore()
+        }
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        cachedBitmap?.recycle()
+        cachedBitmap = null
+        cacheCanvas = null
+        isPathDirty = true
+    }
+
+    override fun dispatchDraw(canvas: Canvas) {
+
+        if (isPathDirty) {
+            setOutlineAndBackground(layoutRect)
+            shadows.forEach { shadow ->
+                shadow.updatePath(shadowRect, radius)
+            }
+            if (renderMode == RENDER_MODE_BITMAP_CACHE) {
+                updateBitmapCache()
+            }
+            isPathDirty = false
+        }
+
+        if (renderMode == RENDER_MODE_BITMAP_CACHE && cachedBitmap != null) {
+            canvas.drawBitmap(cachedBitmap!!, -cacheOutsetLeft, -cacheOutsetTop, null)
+        } else {
+            try {
+                canvas.save()
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    canvas.clipOutPath(backgroundPath)
+                } else {
+                    @Suppress("DEPRECATION")
+                    canvas.clipPath(backgroundPath, Region.Op.DIFFERENCE)
+                }
+
+                shadows.forEach { shadow ->
+                    shadow.updatePaint()
+                    if (shadow.isEnable) {
+                        shadow.draw(canvas)
+                    }
+                }
+            } finally {
+                canvas.restore()
+            }
         }
 
         canvas.drawPath(backgroundPath, backgroundPaint)
@@ -320,6 +451,12 @@ class ShadowLayout : FrameLayout {
         val width = abs(right - left).toFloat()
         val height = abs(bottom - top).toFloat()
         layoutRect.set(0f, 0f, width, height)
+        isPathDirty = true
+    }
+
+    override fun invalidate() {
+        isPathDirty = true
+        super.invalidate()
     }
 
     private fun updatePadding() {
@@ -810,8 +947,6 @@ class ShadowLayout : FrameLayout {
 
             reset()
 
-            val targetRect = RectF()
-
             if (stroke?.isEnable == true) {
                 val newPath = outlinePath.getInnerPath(stroke!!.strokeWidth)
                 newPath.computeBounds(targetRect, true)
@@ -849,6 +984,7 @@ class ShadowLayout : FrameLayout {
         fun backgroundColor(color: Int) = apply { this@ShadowLayout.backgroundColor = color }
         fun backgroundBlur(blur: Float) = apply { this@ShadowLayout.backgroundBlur = blur }
         fun backgroundBlurType(type: BlurMaskFilter.Blur) = apply { this@ShadowLayout.backgroundBlurType = type }
+        fun renderMode(mode: Int) = apply { this@ShadowLayout.renderMode = mode; this@ShadowLayout.applyRenderMode() }
         
         fun radius(block: Radius.() -> Unit) = apply {
             if (this@ShadowLayout.radius == null) this@ShadowLayout.radius = Radius()
