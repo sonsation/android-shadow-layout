@@ -7,6 +7,10 @@ material = "1.14.0"
 activity = "1.13.0"
 constraintlayout = "2.2.1"
 android-maven-gradle-plugin = "2.1"
+junit = "4.13.2"
+androidx-test-ext-junit = "1.2.1"
+robolectric = "4.12.2"
+mockk = "1.13.11"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -15,9 +19,14 @@ material = { group = "com.google.android.material", name = "material", version.r
 androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 maven-gradle-plugin = { group = "com.github.dcendents", name = "android-maven-gradle-plugin", version.ref = "android-maven-gradle-plugin" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidx-test-ext-junit" }
+robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
+mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 android-library = { id = "com.android.library", version.ref = "agp" }
+
 

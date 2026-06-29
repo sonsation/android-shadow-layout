@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <com.sonsation.library.ShadowLayout
+        android:id="@+id/shadow_layout_1"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:autoAdjustPadding="true"
+        app:clipToOutline="true"
+        app:background_blur="5dp"
+        app:background_radius="12dp"
+        app:background_radius_half="false"
+        app:background_radius_weight="1.2"
+        app:background_corner_smoothing="0.5"
+        app:background_color="#FFFF0000"
+        app:background_blur_type="OUTER"
+        app:stroke_width="4dp"
+        app:stroke_color="#FF00FF00"
+        app:stroke_type="CENTER"
+        app:stroke_alpha="128"
+        app:stroke_blur="2dp"
+        app:stroke_blur_type="SOLID"
+        app:stroke_draw_as_overlay="true"
+        app:gradient_start_color="#FF0000FF"
+        app:gradient_center_color="#FF00FFFF"
+        app:gradient_end_color="#FFFF00FF"
+        app:gradient_angle="90"
+        app:gradient_offset_x="10dp"
+        app:gradient_offset_y="10dp"
+        app:stroke_gradient_start_color="#FFFFFFFF"
+        app:stroke_gradient_end_color="#FF000000"
+        app:stroke_gradient_angle="180"
+        app:shadow_color="#FF888888"
+        app:shadow_blur="8dp"
+        app:shadow_offset_x="3dp"
+        app:shadow_offset_y="3dp"
+        app:shadow_spread="1dp"
+        app:shadow_render_mode="BITMAP_CACHE" />
+
+    <com.sonsation.library.ShadowLayout
+        android:id="@+id/shadow_layout_2"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:background_top_left_radius="2dp"
+        app:background_top_right_radius="4dp"
+        app:background_bottom_left_radius="6dp"
+        app:background_bottom_right_radius="8dp"
+        app:shadow_array="{10,5,5,#FF0000}, {20,10,10,2,#00FF00}" />
+
+    <com.sonsation.library.ShadowLayout
+        android:id="@+id/shadow_layout_3"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:clipToOutline="true" />
+
+</LinearLayout>
