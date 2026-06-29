@@ -267,14 +267,26 @@ class ShadowLayout : FrameLayout {
 
         setOutlineAndBackground(layoutRect)
 
-        shadows.forEach { shadow ->
-
-            shadow.updatePath(shadowRect, radius)
-            shadow.updatePaint()
-
-            if (shadow.isEnable) {
-                shadow.draw(canvas)
+        try {
+            canvas.save()
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                canvas.clipOutPath(backgroundPath)
+            } else {
+                @Suppress("DEPRECATION")
+                canvas.clipPath(backgroundPath, Region.Op.DIFFERENCE)
             }
+
+            shadows.forEach { shadow ->
+
+                shadow.updatePath(shadowRect, radius)
+                shadow.updatePaint()
+
+                if (shadow.isEnable) {
+                    shadow.draw(canvas)
+                }
+            }
+        } finally {
+            canvas.restore()
         }
 
         canvas.drawPath(backgroundPath, backgroundPaint)
@@ -831,5 +843,55 @@ class ShadowLayout : FrameLayout {
     fun setAutoAdjustPadding(isEnable: Boolean) {
         autoAdjustPadding = isEnable
         updatePadding()
+    }
+
+    inner class Builder {
+        fun backgroundColor(color: Int) = apply { this@ShadowLayout.backgroundColor = color }
+        fun backgroundBlur(blur: Float) = apply { this@ShadowLayout.backgroundBlur = blur }
+        fun backgroundBlurType(type: BlurMaskFilter.Blur) = apply { this@ShadowLayout.backgroundBlurType = type }
+        
+        fun radius(block: Radius.() -> Unit) = apply {
+            if (this@ShadowLayout.radius == null) this@ShadowLayout.radius = Radius()
+            this@ShadowLayout.radius?.block()
+        }
+
+        fun shadow(index: Int = 0, block: Shadow.() -> Unit) = apply {
+            if (index >= 0 && index < this@ShadowLayout.shadows.size) {
+                this@ShadowLayout.shadows[index].block()
+            } else {
+                val shadow = Shadow()
+                shadow.block()
+                this@ShadowLayout.shadows.add(shadow)
+            }
+        }
+        
+        fun clearShadows() = apply { this@ShadowLayout.shadows.clear() }
+
+        fun stroke(block: Stroke.() -> Unit) = apply {
+            if (this@ShadowLayout.stroke == null) this@ShadowLayout.stroke = Stroke()
+            this@ShadowLayout.stroke?.block()
+        }
+
+        fun gradient(block: Gradient.() -> Unit) = apply {
+            if (this@ShadowLayout.gradient == null) this@ShadowLayout.gradient = Gradient()
+            this@ShadowLayout.gradient?.block()
+        }
+
+        fun strokeGradient(block: Gradient.() -> Unit) = apply {
+            if (this@ShadowLayout.strokeGradient == null) this@ShadowLayout.strokeGradient = Gradient()
+            this@ShadowLayout.strokeGradient?.block()
+        }
+
+        fun commit() {
+            if (this@ShadowLayout.autoAdjustPadding) {
+                this@ShadowLayout.updatePadding()
+            } else {
+                this@ShadowLayout.invalidate()
+            }
+        }
+    }
+
+    fun build(block: Builder.() -> Unit) {
+        Builder().apply(block).commit()
     }
 }
