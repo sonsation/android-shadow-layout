@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.sonsation.library"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 21
@@ -17,16 +17,14 @@ android {
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro")
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
-    }
+
     publishing {
         multipleVariants {
             allVariants()

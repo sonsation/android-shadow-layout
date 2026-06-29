@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "com.sonsation.shadowlayout"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.sonsation.shadowlayout"
@@ -34,10 +34,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
-    }
-
-    kotlinOptions {
-        jvmTarget = "1.8"
     }
 
     lint {
