@@ -4,862 +4,241 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#ffffff">
+    android:background="#F5F5F5">
 
+    <!-- Sticky Top Preview Area -->
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/shadow_layout_container"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:clipChildren="false"
-        android:clipToPadding="false"
-        android:paddingBottom="40dp"
-        android:paddingTop="60dp"
+        android:id="@+id/preview_container"
+        android:layout_width="match_parent"
+        android:layout_height="250dp"
         android:background="#ffffff"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        android:elevation="8dp"
         app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:id="@+id/btn_theme_toggle"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_margin="16dp"
+            android:padding="8dp"
+            android:background="?selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_month"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="#666666" />
 
         <com.sonsation.library.ShadowLayout
             android:id="@+id/shadow_layout"
-            android:layout_width="0dp"
-            android:layout_height="100dp"
-            android:layout_marginHorizontal="20dp"
-            app:background_color="#938699"
+            android:layout_width="160dp"
+            android:layout_height="160dp"
+            app:background_color="#FFFFFF"
+            app:background_radius="32dp"
+            app:shadow_blur="15dp"
+            app:shadow_offset_y="5dp"
+            app:shadow_color="#33000000"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"/>
+            app:layout_constraintTop_toTopOf="parent">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="Shadow"
+                android:textColor="#333333"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+        </com.sonsation.library.ShadowLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
+    <!-- Bottom Controls Area -->
     <androidx.core.widget.NestedScrollView
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:fillViewport="true"
+        android:clipToPadding="false"
+        android:padding="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/shadow_layout_container"
-        app:layout_constraintVertical_bias="0.0">
+        app:layout_constraintTop_toBottomOf="@id/preview_container">
 
-        <androidx.appcompat.widget.LinearLayoutCompat
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:clipChildren="false"
-            android:clipToPadding="false"
             android:orientation="vertical"
-            android:paddingBottom="80dp">
+            android:paddingBottom="40dp">
+
+            <!-- Colors Section -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🎨 Colors"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="#333333"
+                android:layout_marginBottom="8dp"/>
 
             <com.sonsation.library.ShadowLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingTop="10dp"
-                android:paddingBottom="10dp"
-                app:background_color="#999999"
-                app:background_radius="24dp">
+                android:layout_marginBottom="24dp"
+                app:background_color="#FFFFFF"
+                app:background_radius="16dp"
+                app:shadow_blur="10dp"
+                app:shadow_offset_y="2dp"
+                app:shadow_color="#11000000">
 
-                <androidx.appcompat.widget.LinearLayoutCompat
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:text="Alpha"
-                        android:textColor="#000000"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
+                    <include layout="@layout/item_color_picker" android:id="@+id/color_bg" />
+                    <include layout="@layout/item_color_picker" android:id="@+id/color_shadow" />
+                    <include layout="@layout/item_color_picker" android:id="@+id/color_stroke" />
 
-                    <SeekBar
-                        android:id="@+id/alpha_seekbar"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="20dp"
-                        android:progress="100"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/x_title" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/alpha_value"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:text="1.0"
-                        android:textColor="#000000"
-                        android:textSize="14sp"
-                        android:gravity="center" />
-
-                </androidx.appcompat.widget.LinearLayoutCompat>
-
+                </LinearLayout>
             </com.sonsation.library.ShadowLayout>
+
+            <!-- Shadow Geometry Section -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="📐 Shadow Geometry"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="#333333"
+                android:layout_marginBottom="8dp"/>
 
             <com.sonsation.library.ShadowLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:paddingTop="10dp"
-                android:paddingBottom="10dp"
-                app:background_color="#999999"
-                app:background_radius="24dp">
+                android:layout_marginBottom="24dp"
+                app:background_color="#FFFFFF"
+                app:background_radius="16dp"
+                app:shadow_blur="10dp"
+                app:shadow_offset_y="2dp"
+                app:shadow_color="#11000000">
 
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/background"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:text="Shadow"
-                        android:textColor="#000000"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/x_title"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="20dp"
-                        android:text="x"
-                        android:textColor="#000000"
-                        android:textSize="14sp"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/background" />
-
-                    <SeekBar
-                        android:id="@+id/x_seekbar"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="20dp"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/x_title" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/x_value"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:text="0dp"
-                        android:textColor="#000000"
-                        android:textSize="14sp"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/x_seekbar" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/y_title"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="30dp"
-                        android:layout_marginEnd="20dp"
-                        android:text="y"
-                        android:textColor="#000000"
-                        android:textSize="14sp"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/x_value" />
-
-                    <SeekBar
-                        android:id="@+id/y_seekbar"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="20dp"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/y_title" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/y_value"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:text="0dp"
-                        android:textColor="#000000"
-                        android:textSize="14sp"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/y_seekbar" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/radius_title"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="30dp"
-                        android:layout_marginEnd="20dp"
-                        android:text="radius"
-                        android:textColor="#000000"
-                        android:textSize="14sp"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/y_value" />
-
-                    <SeekBar
-                        android:id="@+id/radius_seekbar"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="20dp"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/radius_title" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/radius_value"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:text="0dp"
-                        android:textColor="#000000"
-                        android:textSize="14sp"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/radius_seekbar" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/spread_title"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="30dp"
-                        android:layout_marginEnd="20dp"
-                        android:text="spread"
-                        android:textColor="#000000"
-                        android:textSize="14sp"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/radius_value" />
-
-                    <SeekBar
-                        android:id="@+id/spread_seekbar"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="20dp"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/spread_title" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/spread_value"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:text="0dp"
-                        android:textColor="#000000"
-                        android:textSize="14sp"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/spread_seekbar" />
-
-                </androidx.constraintlayout.widget.ConstraintLayout>
-
-            </com.sonsation.library.ShadowLayout>
-
-            <com.sonsation.library.ShadowLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:paddingTop="10dp"
-                android:paddingBottom="10dp"
-                app:background_color="#999999"
-                app:background_radius="24dp">
-
-                <androidx.appcompat.widget.LinearLayoutCompat
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    android:orientation="vertical"
+                    android:paddingTop="16dp"
+                    android:paddingBottom="16dp">
 
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:text="Stroke"
-                        android:textColor="#000000"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
+                    <include layout="@layout/item_slider" android:id="@+id/slider_shadow_x" />
+                    <include layout="@layout/item_slider" android:id="@+id/slider_shadow_y" />
+                    <include layout="@layout/item_slider" android:id="@+id/slider_shadow_radius" />
+                    <include layout="@layout/item_slider" android:id="@+id/slider_shadow_spread" />
 
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="20dp"
-                        android:text="alpha"
-                        android:textColor="#000000"
-                        android:textSize="14sp"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/background" />
-
-                    <SeekBar
-                        android:id="@+id/stroke_alpha_seekbar"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="20dp"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/x_title" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/stroke_alpha_value"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:text="100"
-                        android:textColor="#000000"
-                        android:textSize="14sp"
-                        android:gravity="center" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="20dp"
-                        android:text="width"
-                        android:textColor="#000000"
-                        android:textSize="14sp"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/background" />
-
-                    <SeekBar
-                        android:id="@+id/width_seekbar"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="20dp"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/x_title" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/width_value"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:text="0dp"
-                        android:textColor="#000000"
-                        android:textSize="14sp"
-                        android:gravity="center" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="20dp"
-                        android:text="blur"
-                        android:textColor="#000000"
-                        android:textSize="14sp"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/background" />
-
-                    <SeekBar
-                        android:id="@+id/stroke_blur_seekbar"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="20dp"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/x_title" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/stroke_blur_value"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:text="0dp"
-                        android:textColor="#000000"
-                        android:textSize="14sp"
-                        android:gravity="center" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="20dp"
-                        android:text="type"
-                        android:textColor="#000000"
-                        android:textSize="14sp"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/background" />
-
-                    <SeekBar
-                        android:id="@+id/stroke_type_seekbar"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="20dp"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/x_title" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/stroke_type_value"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:text="INNER"
-                        android:textColor="#000000"
-                        android:textSize="14sp"
-                        android:gravity="center" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="20dp"
-                        android:text="blur type"
-                        android:textColor="#000000"
-                        android:textSize="14sp"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/background" />
-
-                    <SeekBar
-                        android:id="@+id/stroke_blur_type_seekbar"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="20dp"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/x_title" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/stroke_blur_type_value"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:text="Normal"
-                        android:textColor="#000000"
-                        android:textSize="14sp"
-                        android:gravity="center" />
-
-                </androidx.appcompat.widget.LinearLayoutCompat>
-
+                </LinearLayout>
             </com.sonsation.library.ShadowLayout>
+
+            <!-- Shape Section -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🟦 Shape"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="#333333"
+                android:layout_marginBottom="8dp"/>
 
             <com.sonsation.library.ShadowLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:paddingTop="10dp"
-                android:paddingBottom="10dp"
-                app:background_color="#999999"
-                app:background_radius="24dp">
+                android:layout_marginBottom="24dp"
+                app:background_color="#FFFFFF"
+                app:background_radius="16dp"
+                app:shadow_blur="10dp"
+                app:shadow_offset_y="2dp"
+                app:shadow_color="#11000000">
 
-                <androidx.appcompat.widget.LinearLayoutCompat
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    android:orientation="vertical"
+                    android:paddingTop="16dp"
+                    android:paddingBottom="16dp">
 
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:text="Background"
-                        android:textColor="#000000"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
+                    <include layout="@layout/item_slider" android:id="@+id/slider_corner_radius" />
+                    <include layout="@layout/item_slider" android:id="@+id/slider_corner_smoothing" />
 
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="20dp"
-                        android:text="radius"
-                        android:textColor="#000000"
-                        android:textSize="14sp"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/background" />
-
-                    <SeekBar
-                        android:id="@+id/background_radius_seekbar"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="20dp"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/x_title" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/background_radius_value"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:text="0dp"
-                        android:textColor="#000000"
-                        android:textSize="14sp"
-                        android:gravity="center" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="20dp"
-                        android:text="corner smoothing"
-                        android:textColor="#000000"
-                        android:textSize="14sp" />
-
-                    <SeekBar
-                        android:id="@+id/background_corner_smoothing_seekbar"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="20dp" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/background_corner_smoothing_value"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:text="0.0"
-                        android:textColor="#000000"
-                        android:textSize="14sp"
-                        android:gravity="center" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="20dp"
-                        android:text="blur"
-                        android:textColor="#000000"
-                        android:textSize="14sp"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/background" />
-
-                    <SeekBar
-                        android:id="@+id/background_blur_seekbar"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="20dp"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/x_title" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/background_blur_value"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:text="0dp"
-                        android:textColor="#000000"
-                        android:textSize="14sp"
-                        android:gravity="center" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="20dp"
-                        android:text="blur type"
-                        android:textColor="#000000"
-                        android:textSize="14sp"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/background" />
-
-                    <SeekBar
-                        android:id="@+id/background_blur_type_seekbar"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="20dp"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/x_title" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/background_blur_type_value"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:text="0dp"
-                        android:textColor="#000000"
-                        android:textSize="14sp"
-                        android:gravity="center" />
-
-                </androidx.appcompat.widget.LinearLayoutCompat>
-
+                </LinearLayout>
             </com.sonsation.library.ShadowLayout>
+
+            <!-- Stroke Section -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🖌 Stroke"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="#333333"
+                android:layout_marginBottom="8dp"/>
 
             <com.sonsation.library.ShadowLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:paddingTop="10dp"
-                android:paddingBottom="10dp"
-                app:background_color="#999999"
-                app:background_radius="24dp">
+                android:layout_marginBottom="24dp"
+                app:background_color="#FFFFFF"
+                app:background_radius="16dp"
+                app:shadow_blur="10dp"
+                app:shadow_offset_y="2dp"
+                app:shadow_color="#11000000">
 
-                <androidx.appcompat.widget.LinearLayoutCompat
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    android:orientation="vertical"
+                    android:paddingTop="16dp"
+                    android:paddingBottom="16dp">
 
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:text="Gradient"
-                        android:textColor="#000000"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
+                    <include layout="@layout/item_slider" android:id="@+id/slider_stroke_width" />
+                    <include layout="@layout/item_slider" android:id="@+id/slider_stroke_alpha" />
+                    <include layout="@layout/item_slider" android:id="@+id/slider_stroke_blur" />
 
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="20dp"
-                        android:text="x"
-                        android:textColor="#000000"
-                        android:textSize="14sp"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/background" />
-
-                    <SeekBar
-                        android:id="@+id/gradient_x_seekbar"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="20dp" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/gradient_x_value"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:text="0dp"
-                        android:textColor="#000000"
-                        android:textSize="14sp"
-                        android:gravity="center" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="30dp"
-                        android:layout_marginEnd="20dp"
-                        android:text="y"
-                        android:textColor="#000000"
-                        android:textSize="14sp" />
-
-                    <SeekBar
-                        android:id="@+id/gradient_y_seekbar"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="20dp" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/gradient_y_value"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:text="0dp"
-                        android:textColor="#000000"
-                        android:textSize="14sp"
-                        android:gravity="center"/>
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="30dp"
-                        android:layout_marginEnd="20dp"
-                        android:text="angle"
-                        android:textColor="#000000"
-                        android:textSize="14sp" />
-
-                    <SeekBar
-                        android:id="@+id/gradient_angle_seekbar"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="20dp" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/gradient_angle_value"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:text="OFF"
-                        android:textColor="#000000"
-                        android:textSize="14sp"
-                        android:gravity="center"/>
-
-                </androidx.appcompat.widget.LinearLayoutCompat>
-
+                </LinearLayout>
             </com.sonsation.library.ShadowLayout>
+
+            <!-- Gradient Section -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🌈 Gradient"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="#333333"
+                android:layout_marginBottom="8dp"/>
 
             <com.sonsation.library.ShadowLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:paddingTop="10dp"
-                android:paddingBottom="10dp"
-                app:background_color="#999999"
-                app:background_radius="24dp">
+                android:layout_marginBottom="24dp"
+                app:background_color="#FFFFFF"
+                app:background_radius="16dp"
+                app:shadow_blur="10dp"
+                app:shadow_offset_y="2dp"
+                app:shadow_color="#11000000">
 
-                <androidx.appcompat.widget.LinearLayoutCompat
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    android:orientation="vertical"
+                    android:paddingTop="16dp"
+                    android:paddingBottom="16dp">
 
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:text="Stroke Gradient"
-                        android:textColor="#000000"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
+                    <include layout="@layout/item_slider" android:id="@+id/slider_gradient_x" />
+                    <include layout="@layout/item_slider" android:id="@+id/slider_gradient_y" />
+                    <include layout="@layout/item_slider" android:id="@+id/slider_gradient_angle" />
 
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="20dp"
-                        android:text="x"
-                        android:textColor="#000000"
-                        android:textSize="14sp"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/background" />
-
-                    <SeekBar
-                        android:id="@+id/stroke_gradient_x_seekbar"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="20dp" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/stroke_gradient_x_value"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:text="0dp"
-                        android:textColor="#000000"
-                        android:textSize="14sp"
-                        android:gravity="center" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="30dp"
-                        android:layout_marginEnd="20dp"
-                        android:text="y"
-                        android:textColor="#000000"
-                        android:textSize="14sp" />
-
-                    <SeekBar
-                        android:id="@+id/stroke_gradient_y_seekbar"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="20dp" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/stroke_gradient_y_value"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:text="0dp"
-                        android:textColor="#000000"
-                        android:textSize="14sp"
-                        android:gravity="center"/>
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="30dp"
-                        android:layout_marginEnd="20dp"
-                        android:text="angle"
-                        android:textColor="#000000"
-                        android:textSize="14sp" />
-
-                    <SeekBar
-                        android:id="@+id/stroke_gradient_angle_seekbar"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="20dp" />
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:id="@+id/stroke_gradient_angle_value"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:text="OFF"
-                        android:textColor="#000000"
-                        android:textSize="14sp"
-                        android:gravity="center"/>
-
-                </androidx.appcompat.widget.LinearLayoutCompat>
-
+                </LinearLayout>
             </com.sonsation.library.ShadowLayout>
 
-        </androidx.appcompat.widget.LinearLayoutCompat>
-
+        </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
