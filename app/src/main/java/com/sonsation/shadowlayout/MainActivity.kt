@@ -141,6 +141,12 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Gradient
+        setupSlider(bind.sliderGradientX.root, "Gradient X", -200, 200, 0, "dp") {
+            bind.shadowLayout.updateGradientOffsetX(it * density)
+        }
+        setupSlider(bind.sliderGradientY.root, "Gradient Y", -200, 200, 0, "dp") {
+            bind.shadowLayout.updateGradientOffsetY(it * density)
+        }
         setupSlider(bind.sliderGradientAngle.root, "Gradient Angle", -1, 360, -1, "°") {
             val angle = if (it == -1) -1 else it / 45 * 45 // Snap to 45 degrees
             if (angle != -1) {
@@ -148,6 +154,23 @@ class MainActivity : AppCompatActivity() {
                 bind.shadowLayout.updateGradientAngle(angle)
             } else {
                 bind.shadowLayout.updateGradientColor(Color.TRANSPARENT, Color.TRANSPARENT)
+            }
+        }
+
+        // Stroke Gradient
+        setupSlider(bind.sliderStrokeGradientX.root, "Stroke Grad X", -200, 200, 0, "dp") {
+            bind.shadowLayout.updateStrokeGradientOffsetX(it * density)
+        }
+        setupSlider(bind.sliderStrokeGradientY.root, "Stroke Grad Y", -200, 200, 0, "dp") {
+            bind.shadowLayout.updateStrokeGradientOffsetY(it * density)
+        }
+        setupSlider(bind.sliderStrokeGradientAngle.root, "Stroke Grad Angle", -1, 360, -1, "°") {
+            val angle = if (it == -1) -1 else it / 45 * 45 // Snap to 45 degrees
+            if (angle != -1) {
+                bind.shadowLayout.updateStrokeGradientColor(Color.parseColor("#00E676"), Color.parseColor("#2979FF"))
+                bind.shadowLayout.updateStrokeGradientAngle(angle)
+            } else {
+                bind.shadowLayout.updateStrokeGradientColor(Color.TRANSPARENT, Color.TRANSPARENT)
             }
         }
     }

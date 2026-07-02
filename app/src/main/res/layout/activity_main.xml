@@ -10,9 +10,11 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/preview_container"
         android:layout_width="match_parent"
-        android:layout_height="250dp"
+        android:layout_height="320dp"
         android:background="#ffffff"
         android:elevation="8dp"
+        android:clipChildren="false"
+        android:clipToPadding="false"
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
@@ -234,6 +236,27 @@
                     <include layout="@layout/item_slider" android:id="@+id/slider_gradient_x" />
                     <include layout="@layout/item_slider" android:id="@+id/slider_gradient_y" />
                     <include layout="@layout/item_slider" android:id="@+id/slider_gradient_angle" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginBottom="16dp"
+                        android:background="#E0E0E0" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Stroke Gradient"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="#666666"
+                        android:layout_marginBottom="8dp"
+                        android:layout_marginStart="16dp"/>
+
+                    <include layout="@layout/item_slider" android:id="@+id/slider_stroke_gradient_x" />
+                    <include layout="@layout/item_slider" android:id="@+id/slider_stroke_gradient_y" />
+                    <include layout="@layout/item_slider" android:id="@+id/slider_stroke_gradient_angle" />
 
                 </LinearLayout>
             </com.sonsation.library.ShadowLayout>
