@@ -51,10 +51,20 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
 
     testImplementation(libs.junit)
+    testImplementation("org.robolectric:robolectric:4.12.1")
 }
 
 kotlin {
     jvmToolchain(17)
+}
+
+android {
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
 }
