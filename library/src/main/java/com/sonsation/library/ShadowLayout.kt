@@ -390,6 +390,7 @@ class ShadowLayout : FrameLayout {
             setOutlineAndBackground(layoutRect)
             shadows.forEach { shadow ->
                 shadow.updatePath(shadowRect, radius)
+                shadow.updatePaint()
             }
             if (renderMode == RENDER_MODE_BITMAP_CACHE) {
                 updateBitmapCache()
@@ -410,7 +411,6 @@ class ShadowLayout : FrameLayout {
                 }
 
                 shadows.forEach { shadow ->
-                    shadow.updatePaint()
                     if (shadow.isEnable) {
                         shadow.draw(canvas)
                     }

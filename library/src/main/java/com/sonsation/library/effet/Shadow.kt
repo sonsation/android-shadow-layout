@@ -12,25 +12,29 @@ class Shadow(
     var shadowSpread: Float = 0f
 ) {
 
-    private val paint by lazy { Paint() }
+    val paint by lazy { Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL } }
     private val path by lazy { Path() }
     private val rect by lazy { RectF() }
+
+    private var cachedBlurSize: Float? = null
+    private var cachedShadowColor: Int? = null
 
     val isEnable: Boolean
         get() = (blurSize != 0f || shadowSpread != 0f) && shadowColor != ViewHelper.NOT_SET_COLOR
 
     fun updatePaint() {
-
-        paint.apply {
-            isAntiAlias = true
-            color = shadowColor
-            style = Paint.Style.FILL
-
+        if (cachedShadowColor != shadowColor) {
+            paint.color = shadowColor
+            cachedShadowColor = shadowColor
+        }
+        
+        if (cachedBlurSize != blurSize) {
             if (blurSize != 0f) {
-                maskFilter = BlurMaskFilter(blurSize, BlurMaskFilter.Blur.NORMAL)
+                paint.maskFilter = BlurMaskFilter(blurSize, BlurMaskFilter.Blur.NORMAL)
             } else {
-                maskFilter = null
+                paint.maskFilter = null
             }
+            cachedBlurSize = blurSize
         }
     }
 
