@@ -168,6 +168,7 @@
 
                     <include layout="@layout/item_slider" android:id="@+id/slider_corner_radius" />
                     <include layout="@layout/item_slider" android:id="@+id/slider_corner_smoothing" />
+                    <include layout="@layout/item_slider" android:id="@+id/slider_alpha" />
 
                 </LinearLayout>
             </com.sonsation.library.ShadowLayout>

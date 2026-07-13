@@ -128,6 +128,9 @@ class MainActivity : AppCompatActivity() {
         setupSlider(bind.sliderCornerSmoothing.root, "Corner Smoothing", 0, 100, 0, "%") {
             bind.shadowLayout.updateCornerSmoothing(it / 100f)
         }
+        setupSlider(bind.sliderAlpha.root, "Alpha", 0, 100, 100, "%") {
+            bind.shadowLayout.alpha = it / 100f
+        }
 
         // Stroke
         setupSlider(bind.sliderStrokeWidth.root, "Stroke Width", 0, 50, 0, "dp") {
