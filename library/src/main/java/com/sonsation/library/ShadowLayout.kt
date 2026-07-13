@@ -286,6 +286,7 @@ class ShadowLayout : FrameLayout {
     fun updateRenderMode(mode: Int) {
         renderMode = mode
         applyRenderMode()
+        isPathDirty = true
         invalidate()
     }
 
@@ -454,10 +455,6 @@ class ShadowLayout : FrameLayout {
         isPathDirty = true
     }
 
-    override fun invalidate() {
-        isPathDirty = true
-        super.invalidate()
-    }
 
     private fun updatePadding() {
         setPadding(padding.start, padding.top, padding.end, padding.bottom)
@@ -465,27 +462,32 @@ class ShadowLayout : FrameLayout {
 
     fun updateBackgroundColor(color: Int) {
         backgroundColor = color
+        isPathDirty = true
         invalidate()
     }
 
     fun updateRadius(radius: Float) {
         this.radius?.updateRadius(radius)
+        isPathDirty = true
         invalidate()
     }
 
     fun updateRadius(topLeft: Float, topRight: Float, bottomLeft: Float, bottomRight: Float) {
         this.radius?.updateRadius(topLeft, topRight, bottomLeft, bottomRight)
+        isPathDirty = true
         invalidate()
     }
 
     fun updateCornerSmoothing(smoothing: Float) {
         this.radius?.cornerSmoothing = smoothing
+        isPathDirty = true
         invalidate()
     }
 
     fun addBackgroundShadow(blurSize: Float, offsetX: Float, offsetY: Float, shadowColor: Int) {
         val shadow = Shadow(blurSize, shadowColor, offsetX, offsetY, 0f)
         shadows.add(shadow)
+        isPathDirty = true
         invalidate()
     }
 
@@ -498,31 +500,37 @@ class ShadowLayout : FrameLayout {
     ) {
         val shadow = Shadow(blurSize, shadowColor, offsetX, offsetY, spread)
         shadows.add(shadow)
+        isPathDirty = true
         invalidate()
     }
 
     fun removeBackgroundShadowLast() {
         shadows.removeLastOrNull()
+        isPathDirty = true
         invalidate()
     }
 
     fun removeBackgroundShadowFirst() {
         shadows.removeFirstOrNull()
+        isPathDirty = true
         invalidate()
     }
 
     fun removeAllBackgroundShadows() {
         shadows.clear()
+        isPathDirty = true
         invalidate()
     }
 
     fun removeBackgroundShadow(position: Int) {
         shadows.removeAt(position)
+        isPathDirty = true
         invalidate()
     }
 
     fun updateBackgroundShadow(position: Int, shadow: Shadow) {
         shadows[position] = shadow
+        isPathDirty = true
         invalidate()
     }
 
@@ -539,6 +547,7 @@ class ShadowLayout : FrameLayout {
             this.shadowOffsetX = offsetX
             this.shadowOffsetY = offsetY
         }
+        isPathDirty = true
         invalidate()
     }
 
@@ -557,6 +566,7 @@ class ShadowLayout : FrameLayout {
             this.shadowOffsetY = offsetY
             this.shadowSpread = spread
         }
+        isPathDirty = true
         invalidate()
     }
 
@@ -580,11 +590,11 @@ class ShadowLayout : FrameLayout {
 
     fun updateStrokeWidth(strokeWidth: Float) {
         stroke?.updateStrokeWidth(strokeWidth)
+        isPathDirty = true
         if (autoAdjustPadding) {
             updatePadding()
-        } else {
-            invalidate()
         }
+        invalidate()
     }
 
     override fun setPadding(
@@ -610,6 +620,7 @@ class ShadowLayout : FrameLayout {
                 }
                 StrokeType.OUTSIDE -> {
                     super.setPadding(left, top, right, bottom)
+                    isPathDirty = true
                     invalidate()
                 }
             }
@@ -642,6 +653,7 @@ class ShadowLayout : FrameLayout {
                 }
                 StrokeType.OUTSIDE -> {
                     super.setPaddingRelative(start, top, end, bottom)
+                    isPathDirty = true
                     invalidate()
                 }
             }
@@ -653,140 +665,166 @@ class ShadowLayout : FrameLayout {
 
     fun updateStrokeColor(color: Int) {
         stroke?.updateStrokeColor(color)
+        isPathDirty = true
         invalidate()
     }
 
     fun updateGradientColor(startColor: Int, centerColor: Int, endColor: Int) {
         this.gradient?.updateGradientColor(startColor, centerColor, endColor)
+        isPathDirty = true
         invalidate()
     }
 
     fun updateGradientColor(startColor: Int, endColor: Int) {
         this.gradient?.updateGradientColor(startColor, endColor)
+        isPathDirty = true
         invalidate()
     }
 
     fun updateGradientAngle(angle: Int) {
         this.gradient?.updateGradientAngle(angle)
+        isPathDirty = true
         invalidate()
     }
 
     fun updateGradientColors(colors: IntArray?) {
         this.gradient?.updateGradientColors(colors)
+        isPathDirty = true
         invalidate()
     }
 
     fun updateGradientPositions(positions: FloatArray?) {
         this.gradient?.gradientPositions = positions
+        isPathDirty = true
         invalidate()
     }
 
     fun updateLocalMatrix(matrix: Matrix?) {
         this.gradient?.updateLocalMatrix(matrix)
+        isPathDirty = true
         invalidate()
     }
 
     fun updateGradientShader(shader: LinearGradient?) {
         gradient?.updateGradientShader(shader)
+        isPathDirty = true
         invalidate()
     }
 
     fun updateGradientOffsetX(offset: Float) {
         this.gradient?.updateGradientOffsetX(offset)
+        isPathDirty = true
         invalidate()
     }
 
     fun updateGradientOffsetY(offset: Float) {
         this.gradient?.updateGradientOffsetY(offset)
+        isPathDirty = true
         invalidate()
     }
 
     fun updateStrokeGradientColor(startColor: Int, centerColor: Int, endColor: Int) {
         this.strokeGradient?.updateGradientColor(startColor, centerColor, endColor)
+        isPathDirty = true
         invalidate()
     }
 
     fun updateStrokeGradientColor(startColor: Int, endColor: Int) {
         this.strokeGradient?.updateGradientColor(startColor, endColor)
+        isPathDirty = true
         invalidate()
     }
 
     fun updateStrokeGradientAngle(angle: Int) {
         this.strokeGradient?.updateGradientAngle(angle)
+        isPathDirty = true
         invalidate()
     }
 
     fun updateStrokeGradientColors(colors: IntArray?) {
         this.strokeGradient?.updateGradientColors(colors)
+        isPathDirty = true
         invalidate()
     }
 
     fun updateStrokeGradientPositions(positions: FloatArray?) {
         this.strokeGradient?.updateGradientPositions(positions)
+        isPathDirty = true
         invalidate()
     }
 
     fun updateStrokeLocalMatrix(matrix: Matrix?) {
         this.strokeGradient?.updateLocalMatrix(matrix)
+        isPathDirty = true
         invalidate()
     }
 
     fun updateStrokeGradientShader(shader: LinearGradient?) {
         this.strokeGradient?.updateGradientShader(shader)
+        isPathDirty = true
         invalidate()
     }
 
     fun updateStrokeGradientOffsetX(offset: Float) {
         this.strokeGradient?.updateGradientOffsetX(offset)
+        isPathDirty = true
         invalidate()
     }
 
     fun updateStrokeGradientOffsetY(offset: Float) {
         this.strokeGradient?.updateGradientOffsetY(offset)
+        isPathDirty = true
         invalidate()
     }
 
     fun updateBackgroundRadiusHalf(enable: Boolean) {
         this.radius?.radiusHalf = enable
+        isPathDirty = true
         invalidate()
     }
 
     fun updateBackgroundBlur(blur: Float) {
         this.backgroundBlur = blur
+        isPathDirty = true
         invalidate()
     }
 
     fun updateBackgroundBlurType(blurType: BlurMaskFilter.Blur) {
         this.backgroundBlurType = blurType
+        isPathDirty = true
         invalidate()
     }
 
     fun updateStrokeBlur(blur: Float) {
         this.stroke?.blur = blur
+        isPathDirty = true
         invalidate()
     }
 
     fun updateStrokeBlurType(blurType: BlurMaskFilter.Blur) {
         this.stroke?.blurType = blurType
+        isPathDirty = true
         invalidate()
     }
 
     fun updateStrokeDrawAsOverlay(drawAsOverlay: Boolean) {
         this.stroke?.drawAsOverlay = drawAsOverlay
+        isPathDirty = true
         invalidate()
     }
 
     fun updateStrokeType(strokeType: StrokeType) {
         this.stroke?.strokeType = strokeType
+        isPathDirty = true
         if (autoAdjustPadding) {
             updatePadding()
-        } else {
-            invalidate()
         }
+        invalidate()
     }
 
     fun updateStrokeAlpha(alpha: Int) {
         this.stroke?.strokeAlpha = alpha
+        isPathDirty = true
         invalidate()
     }
 
@@ -1019,11 +1057,11 @@ class ShadowLayout : FrameLayout {
         }
 
         fun commit() {
+            isPathDirty = true
             if (this@ShadowLayout.autoAdjustPadding) {
                 this@ShadowLayout.updatePadding()
-            } else {
-                this@ShadowLayout.invalidate()
             }
+            this@ShadowLayout.invalidate()
         }
     }
 
