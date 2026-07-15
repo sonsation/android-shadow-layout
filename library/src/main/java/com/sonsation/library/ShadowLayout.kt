@@ -392,13 +392,7 @@ class ShadowLayout : FrameLayout {
         }
     }
 
-    override fun onDetachedFromWindow() {
-        super.onDetachedFromWindow()
-        cachedBitmap?.recycle()
-        cachedBitmap = null
-        cacheCanvas = null
-        isPathDirty = true
-    }
+
 
     override fun dispatchDraw(canvas: Canvas) {
 
