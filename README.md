@@ -67,6 +67,7 @@ This document serves as a reference for the available methods to update and cust
 | `app:background_corner_smoothing`| Smooths the corners to create a continuous, squircle-like shape (Figma style). Range `0.0` to `1.0`. Default: `0.0`. |
 | `app:background_radius_weight`   | Weight multiplier applied to the corner radius. Default: `1.0`.            |
 | `app:shadow_render_mode`         | Rendering optimization mode. Options: `DEFAULT`, `BITMAP_CACHE`, `HARDWARE_LAYER`. Default: `DEFAULT`. |
+| `app:shadow_bitmap_resolution`   | Downscales the shadow bitmap resolution to drastically optimize memory usage when using `BITMAP_CACHE` mode. Example: `0.5` reduces memory by 75%. Range `0.01` to `1.0`. Default: `1.0`. |
   
 
 ## Reference
@@ -170,6 +171,9 @@ app:shadow_array="{10,0,4,10,#c8c8c8}, {10,0,4,10,#000000}"
 
 - **`updateBackgroundShadow(blurSize: Float, offsetX: Float, offsetY: Float, spread: Float, color: Int)`**  
   Updates the first shadow with blur size, offset, spread, and color.
+
+- **`updateShadowBitmapResolution(resolution: Float)`**  
+  Downscales the shadow bitmap to optimize memory usage (applies only in `BITMAP_CACHE` mode).
 
 ---
 
@@ -412,6 +416,8 @@ shadowLayout.build {
         shadowOffsetY = 5f
         shadowColor = Color.GRAY
     }
+    
+    shadowBitmapResolution(0.5f) // Optimizes memory by 75% in BITMAP_CACHE mode
 }
 ```
 

@@ -94,6 +94,9 @@ class ShadowLayout : FrameLayout {
     var clipOutLine = false
         private set
 
+    var shadowBitmapResolution = 0.5f
+        private set
+
     private var isInitialized = false
 
 
@@ -129,6 +132,7 @@ class ShadowLayout : FrameLayout {
         try {
             autoAdjustPadding = a.getBoolean(R.styleable.ShadowLayout_autoAdjustPadding, false)
             clipOutLine = a.getBoolean(R.styleable.ShadowLayout_clipToOutline, false)
+            shadowBitmapResolution = a.getFloat(R.styleable.ShadowLayout_shadow_bitmap_resolution, 0.5f).coerceIn(0.01f, 1.0f)
             var defaultRenderMode = RENDER_MODE_DEFAULT
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
                 defaultRenderMode = RENDER_MODE_BITMAP_CACHE
@@ -348,8 +352,8 @@ class ShadowLayout : FrameLayout {
         cacheOutsetLeft = maxOutsetLeft
         cacheOutsetTop = maxOutsetTop
 
-        val cacheW = (w + maxOutsetLeft + maxOutsetRight).toInt()
-        val cacheH = (h + maxOutsetTop + maxOutsetBottom).toInt()
+        val cacheW = ((w + maxOutsetLeft + maxOutsetRight) * shadowBitmapResolution).toInt()
+        val cacheH = ((h + maxOutsetTop + maxOutsetBottom) * shadowBitmapResolution).toInt()
 
         try {
             if (cachedBitmap?.width != cacheW || cachedBitmap?.height != cacheH) {
@@ -368,6 +372,7 @@ class ShadowLayout : FrameLayout {
         
         cacheCanvas?.let { cv ->
             cv.save()
+            cv.scale(shadowBitmapResolution, shadowBitmapResolution)
             cv.translate(cacheOutsetLeft, cacheOutsetTop)
             
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -417,7 +422,11 @@ class ShadowLayout : FrameLayout {
         }
 
         if (renderMode == RENDER_MODE_BITMAP_CACHE && cachedBitmap != null) {
-            canvas.drawBitmap(cachedBitmap!!, -cacheOutsetLeft, -cacheOutsetTop, null)
+            canvas.save()
+            val inverseScale = 1f / shadowBitmapResolution
+            canvas.scale(inverseScale, inverseScale)
+            canvas.drawBitmap(cachedBitmap!!, -cacheOutsetLeft * shadowBitmapResolution, -cacheOutsetTop * shadowBitmapResolution, null)
+            canvas.restore()
         } else {
             try {
                 canvas.save()
@@ -1112,6 +1121,10 @@ class ShadowLayout : FrameLayout {
             this@ShadowLayout.strokeGradient?.block()
         }
 
+        fun shadowBitmapResolution(resolution: Float) = apply {
+            this@ShadowLayout.updateShadowBitmapResolution(resolution)
+        }
+
         fun commit() {
             isPathDirty = true
             if (this@ShadowLayout.autoAdjustPadding) {
@@ -1123,5 +1136,11 @@ class ShadowLayout : FrameLayout {
 
     fun build(block: Builder.() -> Unit) {
         Builder().apply(block).commit()
+    }
+
+    fun updateShadowBitmapResolution(resolution: Float) {
+        this.shadowBitmapResolution = resolution.coerceIn(0.01f, 1.0f)
+        isPathDirty = true
+        invalidate()
     }
 }

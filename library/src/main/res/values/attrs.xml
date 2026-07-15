@@ -65,6 +65,8 @@
         <attr name="gradient_colors" format="string"/>
         <attr name="gradient_positions" format="string"/>
 
+        <attr name="shadow_bitmap_resolution" format="float"/>
+
         <!-- Render optimization mode -->
         <attr name="shadow_render_mode" format="enum">
             <enum name="DEFAULT" value="0"/>
