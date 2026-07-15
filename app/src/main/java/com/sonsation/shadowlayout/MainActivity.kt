@@ -120,6 +120,9 @@ class MainActivity : AppCompatActivity() {
             shadowSpread = it * density
             applyShadow()
         }
+        setupSlider(bind.sliderShadowBitmapResolution.root, "Bitmap Resolution", 1, 100, 100, "%") {
+            bind.shadowLayout.updateShadowBitmapResolution(it / 100f)
+        }
 
         // Shape
         setupSlider(bind.sliderCornerRadius.root, "Corner Radius", 0, 100, 32, "dp") {

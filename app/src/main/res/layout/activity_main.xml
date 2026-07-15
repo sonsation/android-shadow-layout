@@ -38,6 +38,7 @@
             app:shadow_blur="15dp"
             app:shadow_offset_y="5dp"
             app:shadow_color="#33000000"
+            app:shadow_render_mode="BITMAP_CACHE"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -135,6 +136,7 @@
                     <include layout="@layout/item_slider" android:id="@+id/slider_shadow_y" />
                     <include layout="@layout/item_slider" android:id="@+id/slider_shadow_radius" />
                     <include layout="@layout/item_slider" android:id="@+id/slider_shadow_spread" />
+                    <include layout="@layout/item_slider" android:id="@+id/slider_shadow_bitmap_resolution" />
 
                 </LinearLayout>
             </com.sonsation.library.ShadowLayout>
