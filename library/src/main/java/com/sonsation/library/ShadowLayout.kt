@@ -2,6 +2,7 @@ package com.sonsation.library
 
 import android.content.Context
 import android.graphics.*
+import android.os.Build
 import android.util.AttributeSet
 import android.widget.FrameLayout
 import com.sonsation.library.effet.*
@@ -57,7 +58,11 @@ class ShadowLayout : FrameLayout {
         const val RENDER_MODE_HARDWARE_LAYER = 2
     }
 
-    var renderMode = RENDER_MODE_DEFAULT
+    var renderMode = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+        RENDER_MODE_BITMAP_CACHE
+    } else {
+        RENDER_MODE_DEFAULT
+    }
         private set
 
     private var cachedBitmap: Bitmap? = null
@@ -124,7 +129,11 @@ class ShadowLayout : FrameLayout {
         try {
             autoAdjustPadding = a.getBoolean(R.styleable.ShadowLayout_autoAdjustPadding, false)
             clipOutLine = a.getBoolean(R.styleable.ShadowLayout_clipToOutline, false)
-            renderMode = a.getInt(R.styleable.ShadowLayout_shadow_render_mode, RENDER_MODE_DEFAULT)
+            var defaultRenderMode = RENDER_MODE_DEFAULT
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+                defaultRenderMode = RENDER_MODE_BITMAP_CACHE
+            }
+            renderMode = a.getInt(R.styleable.ShadowLayout_shadow_render_mode, defaultRenderMode)
             applyRenderMode()
             stroke = Stroke(
                 strokeColor =
@@ -361,7 +370,7 @@ class ShadowLayout : FrameLayout {
             cv.save()
             cv.translate(cacheOutsetLeft, cacheOutsetTop)
             
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 cv.clipOutPath(backgroundPath)
             } else {
                 @Suppress("DEPRECATION")
@@ -412,7 +421,7 @@ class ShadowLayout : FrameLayout {
         } else {
             try {
                 canvas.save()
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     canvas.clipOutPath(backgroundPath)
                 } else {
                     @Suppress("DEPRECATION")
