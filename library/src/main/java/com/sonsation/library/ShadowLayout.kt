@@ -32,6 +32,18 @@ class ShadowLayout : FrameLayout {
         Path()
     }
 
+    private val strokePath by lazy {
+        Path()
+    }
+
+    private val pathMeasure by lazy {
+        PathMeasure()
+    }
+
+    private val pathPos by lazy {
+        FloatArray(2)
+    }
+
     private val backgroundPaint by lazy {
         Paint()
     }
@@ -159,6 +171,8 @@ class ShadowLayout : FrameLayout {
                 } ?: BlurMaskFilter.Blur.NORMAL
                 this.blur = a.getDimension(R.styleable.ShadowLayout_stroke_blur, 0f)
                 this.drawAsOverlay = a.getBoolean(R.styleable.ShadowLayout_stroke_draw_as_overlay, false)
+                this.strokeStart = a.getFloat(R.styleable.ShadowLayout_stroke_start, 0f)
+                this.strokeProgress = a.getFloat(R.styleable.ShadowLayout_stroke_progress, 1f)
             }
 
             val allRadius = a.getDimension(R.styleable.ShadowLayout_background_radius, 0f)
@@ -446,12 +460,12 @@ class ShadowLayout : FrameLayout {
         if (stroke?.isEnable == true) {
 
             if (stroke?.drawAsOverlay == true) {
-                canvas.drawPath(outlinePath, outlinePaint)
+                canvas.drawPath(strokePath, outlinePaint)
                 canvas.clipPath(backgroundPath)
                 super.dispatchDraw(canvas)
                 return
             } else {
-                canvas.drawPath(outlinePath, outlinePaint)
+                canvas.drawPath(strokePath, outlinePaint)
             }
         }
 
@@ -856,6 +870,18 @@ class ShadowLayout : FrameLayout {
         invalidate()
     }
 
+    fun updateStrokeStart(start: Float) {
+        this.stroke?.strokeStart = start
+        isPathDirty = true
+        invalidate()
+    }
+
+    fun updateStrokeProgress(progress: Float) {
+        this.stroke?.strokeProgress = progress
+        isPathDirty = true
+        invalidate()
+    }
+
     fun getGradientInfo(): Gradient? {
         return this.gradient
     }
@@ -1038,6 +1064,38 @@ class ShadowLayout : FrameLayout {
             }
 
             close()
+        }
+
+        strokePath.reset()
+
+        if (stroke?.isEnable == true) {
+            val startRatio = stroke!!.strokeStart.coerceIn(0f, 1f)
+            val lengthRatio = stroke!!.strokeProgress.coerceIn(0f, 1f)
+
+            if (startRatio == 0f && lengthRatio == 1f) {
+                strokePath.set(outlinePath)
+            } else if (lengthRatio > 0f) {
+                pathMeasure.setPath(outlinePath, false)
+                val length = pathMeasure.length
+
+                pathMeasure.getPosTan(0f, pathPos, null)
+                var topCenterOffset = outlineRect.centerX() - pathPos[0]
+                if (topCenterOffset < 0) topCenterOffset += length
+
+                val startDistance = (startRatio * length + topCenterOffset) % length
+                val endDistance = startDistance + lengthRatio * length
+
+                if (endDistance > length) {
+                    pathMeasure.getSegment(startDistance, length, strokePath, true)
+                    pathMeasure.getSegment(0f, endDistance % length, strokePath, false)
+                } else {
+                    pathMeasure.getSegment(startDistance, endDistance, strokePath, true)
+                }
+
+                if (lengthRatio == 1f) {
+                    strokePath.close()
+                }
+            }
         }
 
         backgroundPath.apply {

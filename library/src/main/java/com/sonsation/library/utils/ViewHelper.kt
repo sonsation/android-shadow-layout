@@ -219,11 +219,6 @@ fun Path.addSmoothRoundRect(rect: RectF, radius: Radius) {
     val smoothing = radius.cornerSmoothing.coerceIn(0f, 1f)
     val height = rect.height()
 
-    if (smoothing == 0f) {
-        addRoundRect(rect, radius.getRadiusArray(height), Path.Direction.CW)
-        return
-    }
-
     val targetTopLeftRadius = if (radius.radiusHalf) {
         height.div(2f)
     } else {
@@ -252,6 +247,26 @@ fun Path.addSmoothRoundRect(rect: RectF, radius: Radius) {
     val tr = minOf(targetTopRightRadius, maxRadius)
     val br = minOf(targetBottomRightRadius, maxRadius)
     val bl = minOf(targetBottomLeftRadius, maxRadius)
+
+    if (smoothing == 0f) {
+        moveTo(rect.left + tl, rect.top)
+        
+        if (tr > 0) arcTo(rect.right - 2 * tr, rect.top, rect.right, rect.top + 2 * tr, -90f, 90f, false)
+        else lineTo(rect.right, rect.top)
+        
+        if (br > 0) arcTo(rect.right - 2 * br, rect.bottom - 2 * br, rect.right, rect.bottom, 0f, 90f, false)
+        else lineTo(rect.right, rect.bottom)
+        
+        if (bl > 0) arcTo(rect.left, rect.bottom - 2 * bl, rect.left + 2 * bl, rect.bottom, 90f, 90f, false)
+        else lineTo(rect.left, rect.bottom)
+        
+        if (tl > 0) arcTo(rect.left, rect.top, rect.left + 2 * tl, rect.top + 2 * tl, 180f, 90f, false)
+        else lineTo(rect.left, rect.top)
+        
+        close()
+        return
+    }
+
 
     val tlOffset = getCornerOffset(tl, smoothing, maxRadius)
     moveTo(rect.left + tlOffset, rect.top)

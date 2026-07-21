@@ -190,7 +190,9 @@ app:shadow_array="{10,0,4,10,#c8c8c8}, {10,0,4,10,#000000}"
     app:stroke_type="INSIDE"
     app:stroke_blur="10dp"
     app:stroke_blur_type="INNER"
-    app:stroke_alpha="255">
+    app:stroke_alpha="255"
+    app:stroke_start="0.0"
+    app:stroke_progress="1.0">
 
     <androidx.appcompat.widget.AppCompatTextView
         android:layout_width="wrap_content"
@@ -212,6 +214,8 @@ app:shadow_array="{10,0,4,10,#c8c8c8}, {10,0,4,10,#000000}"
 | `app:stroke_blur`      | The blur radius applied to the stroke. Example: `10dp`.                                                                     |
 | `app:stroke_blur_type` | Type of blur applied to the stroke. Options: `INNER`, `OUTER`, `SOLID`. Default: `INNER`.                                   |
 | `app:stroke_alpha`     | The transparency level of the stroke, ranging from `0` (completely transparent) to `255` (fully opaque). Default: `255`.    |
+| `app:stroke_start`     | The starting point of the stroke as a ratio of the path length, ranging from `0.0` to `1.0`. Default: `0.0`.                |
+| `app:stroke_progress`  | The drawn length of the stroke as a ratio of the total path length, ranging from `0.0` to `1.0`. Default: `1.0`.            |
 
 ### Stroke Type
 - **INSIDE**: The stroke is drawn inside the view boundary, reducing the available space for the content.  
@@ -242,6 +246,12 @@ app:shadow_array="{10,0,4,10,#c8c8c8}, {10,0,4,10,#000000}"
 
 - **`updateStrokeAlpha(alpha: Int)`**  
   Sets the transparency level of the stroke. Accepts a value between `0` (fully transparent) and `255` (fully opaque).
+
+- **`updateStrokeStart(start: Float)`**  
+  Updates the starting point ratio of the stroke (`0.0` to `1.0`).
+
+- **`updateStrokeProgress(progress: Float)`**  
+  Updates the progress/length ratio of the stroke (`0.0` to `1.0`).
 
 ---
 
@@ -447,7 +457,7 @@ view.updateGradientColor(Color.BLUE, Color.GREEN)
 ## License
 ```
 License
-Copyright 2021 Jong Heon Son (sonsation)
+Copyright 2026 Jong Heon Son (sonsation)
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

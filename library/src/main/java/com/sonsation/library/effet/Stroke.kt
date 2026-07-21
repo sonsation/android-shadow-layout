@@ -14,6 +14,9 @@ class Stroke(var strokeWidth: Float = 0f,
     var drawAsOverlay = false
     var blur: Float = 0f
     var blurType = BlurMaskFilter.Blur.NORMAL
+    var strokeStart: Float = 0f
+    var strokeProgress: Float = 1f
+    
     val isEnable: Boolean
         get() = strokeWidth != 0f && strokeColor != ViewHelper.NOT_SET_COLOR
 
@@ -27,5 +30,13 @@ class Stroke(var strokeWidth: Float = 0f,
 
     fun updateStrokeAlpha(alpha: Int) {
         this.strokeAlpha = alpha
+    }
+
+    fun updateStrokeStart(start: Float) {
+        this.strokeStart = start
+    }
+
+    fun updateStrokeProgress(progress: Float) {
+        this.strokeProgress = progress
     }
 }
