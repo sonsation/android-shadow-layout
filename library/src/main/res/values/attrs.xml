@@ -47,6 +47,8 @@
             <enum name="OUTSIDE" value="2"/>
         </attr>
         <attr name="stroke_draw_as_overlay" format="boolean"/>
+        <attr name="stroke_start" format="float"/>
+        <attr name="stroke_progress" format="float"/>
 
         <attr name="shadow_color" format="color" />
         <attr name="shadow_offset_x" format="dimension" />
