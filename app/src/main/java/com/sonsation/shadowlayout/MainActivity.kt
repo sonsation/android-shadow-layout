@@ -136,6 +136,13 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Stroke
+        bind.rgStrokeType.setOnCheckedChangeListener { _, checkedId ->
+            when (checkedId) {
+                R.id.rb_inside -> bind.shadowLayout.updateStrokeType(com.sonsation.library.model.StrokeType.INSIDE)
+                R.id.rb_center -> bind.shadowLayout.updateStrokeType(com.sonsation.library.model.StrokeType.CENTER)
+                R.id.rb_outside -> bind.shadowLayout.updateStrokeType(com.sonsation.library.model.StrokeType.OUTSIDE)
+            }
+        }
         setupSlider(bind.sliderStrokeWidth.root, "Stroke Width", 0, 50, 0, "dp") {
             bind.shadowLayout.updateStrokeWidth(it * density)
         }
@@ -144,6 +151,12 @@ class MainActivity : AppCompatActivity() {
         }
         setupSlider(bind.sliderStrokeBlur.root, "Stroke Blur", 0, 50, 0, "dp") {
             bind.shadowLayout.updateStrokeBlur(it * density)
+        }
+        setupSlider(bind.sliderStrokeStart.root, "Stroke Start", 0, 100, 0, "%") {
+            bind.shadowLayout.updateStrokeStart(it / 100f)
+        }
+        setupSlider(bind.sliderStrokeProgress.root, "Stroke Progress", 0, 100, 100, "%") {
+            bind.shadowLayout.updateStrokeProgress(it / 100f)
         }
 
         // Gradient

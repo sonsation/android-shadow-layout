@@ -203,8 +203,55 @@
                     android:paddingBottom="16dp">
 
                     <include layout="@layout/item_slider" android:id="@+id/slider_stroke_width" />
+                    
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingTop="8dp"
+                        android:paddingBottom="8dp">
+                        
+                        <TextView
+                            android:layout_width="100dp"
+                            android:layout_height="wrap_content"
+                            android:text="Stroke Type"
+                            android:textSize="14sp"
+                            android:textColor="#333333" />
+                            
+                        <RadioGroup
+                            android:id="@+id/rg_stroke_type"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+                            
+                            <RadioButton
+                                android:id="@+id/rb_inside"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:checked="true"
+                                android:text="Inside" />
+                                
+                            <RadioButton
+                                android:id="@+id/rb_center"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Center" />
+                                
+                            <RadioButton
+                                android:id="@+id/rb_outside"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Outside" />
+                        </RadioGroup>
+                    </LinearLayout>
                     <include layout="@layout/item_slider" android:id="@+id/slider_stroke_alpha" />
                     <include layout="@layout/item_slider" android:id="@+id/slider_stroke_blur" />
+                    <include layout="@layout/item_slider" android:id="@+id/slider_stroke_start" />
+                    <include layout="@layout/item_slider" android:id="@+id/slider_stroke_progress" />
 
                 </LinearLayout>
             </com.sonsation.library.ShadowLayout>
