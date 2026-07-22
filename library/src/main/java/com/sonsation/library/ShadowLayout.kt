@@ -468,15 +468,18 @@ class ShadowLayout : FrameLayout {
 
         canvas.drawPath(backgroundPath, backgroundPaint)
 
+        if (clipOutLine) {
+            canvas.save()
+            canvas.clipPath(backgroundPath)
+            super.dispatchDraw(canvas)
+            canvas.restore()
+        } else {
+            super.dispatchDraw(canvas)
+        }
+
         if (stroke?.isEnable == true) {
             canvas.drawPath(strokePath, outlinePaint)
         }
-
-        if (clipOutLine) {
-            canvas.clipPath(outlinePath)
-        }
-
-        super.dispatchDraw(canvas)
     }
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
