@@ -11,7 +11,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var bind: ActivityMainBinding
 
-    private var currentBgColor = Color.parseColor("#FFFFFF")
+    private var currentBgColor = Color.parseColor("#00000000")
     
     // Shadow properties state
     private var shadowColor = Color.parseColor("#33000000")
@@ -21,6 +21,7 @@ class MainActivity : AppCompatActivity() {
     private var shadowSpread = 0f
 
     private var currentStrokeColor = Color.parseColor("#00000000")
+    private var currentContentBgColor = Color.parseColor("#00000000") // Transparent by default
     private var isDarkMode = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -82,6 +83,16 @@ class MainActivity : AppCompatActivity() {
                 bind.shadowLayout.updateStrokeColor(color)
             }.show(supportFragmentManager, "color_picker")
         }
+
+        // Setup Content Background Color
+        updateColorItem(bind.colorContent.root, "Content Color", currentContentBgColor)
+        bind.colorContent.root.setOnClickListener {
+            ColorPickerDialog(currentContentBgColor) { color ->
+                currentContentBgColor = color
+                updateColorItem(bind.colorContent.root, "Content Color", color)
+                bind.tvContent.setBackgroundColor(color)
+            }.show(supportFragmentManager, "color_picker")
+        }
     }
 
     private fun updateColorItem(view: android.view.View, title: String, color: Int) {
@@ -141,6 +152,7 @@ class MainActivity : AppCompatActivity() {
         bind.switchAutoAdjustPadding.setOnCheckedChangeListener { _, isChecked ->
             bind.shadowLayout.setAutoAdjustPadding(isChecked)
         }
+
         bind.rgStrokeType.setOnCheckedChangeListener { _, checkedId ->
             when (checkedId) {
                 R.id.rb_inside -> bind.shadowLayout.updateStrokeType(com.sonsation.library.model.StrokeType.INSIDE)
