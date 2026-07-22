@@ -216,6 +216,9 @@ app:shadow_array="{10,0,4,10,#c8c8c8}, {10,0,4,10,#000000}"
 | `app:stroke_alpha`     | The transparency level of the stroke, ranging from `0` (completely transparent) to `255` (fully opaque). Default: `255`.    |
 | `app:stroke_start`     | The starting point of the stroke as a ratio of the path length, ranging from `0.0` to `1.0`. Default: `0.0`.                |
 | `app:stroke_progress`  | The drawn length of the stroke as a ratio of the total path length, ranging from `0.0` to `1.0`. Default: `1.0`.            |
+| `app:autoAdjustPadding`| If `true`, automatically adjusts the view's padding to accommodate the stroke width, preventing the content from being covered by the stroke. Default: `false`. |
+
+> **Note**: The attribute `app:stroke_draw_as_overlay` has been removed. By default, the stroke behavior depends on the `stroke_type` and you can use `autoAdjustPadding` to prevent the stroke from covering your content.
 
 ### Stroke Type
 - **INSIDE**: The stroke is drawn inside the view boundary, reducing the available space for the content.  
@@ -252,6 +255,9 @@ app:shadow_array="{10,0,4,10,#c8c8c8}, {10,0,4,10,#000000}"
 
 - **`updateStrokeProgress(progress: Float)`**  
   Updates the progress/length ratio of the stroke (`0.0` to `1.0`).
+
+- **`setAutoAdjustPadding(isEnable: Boolean)`**  
+  Enables or disables auto-adjust padding to accommodate stroke width automatically.
 
 ---
 
@@ -428,6 +434,7 @@ shadowLayout.build {
     }
     
     shadowBitmapResolution(0.5f) // Optimizes memory by 75% in BITMAP_CACHE mode
+    autoAdjustPadding = true // Prevents content from being covered by stroke
 }
 ```
 
