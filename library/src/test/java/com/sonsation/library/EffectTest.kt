@@ -70,7 +70,7 @@ class EffectTest {
         assertEquals(-101, s.strokeColor)
         assertEquals(StrokeType.INSIDE, s.strokeType)
         assertEquals(100, s.strokeAlpha)
-        assertFalse(s.drawAsOverlay)
+
         assertEquals(0f, s.blur, 0.01f)
         assertEquals(BlurMaskFilter.Blur.NORMAL, s.blurType)
 
@@ -84,12 +84,12 @@ class EffectTest {
         s.updateStrokeAlpha(200)
         assertEquals(200, s.strokeAlpha)
 
-        s.drawAsOverlay = true
+
         s.blur = 1.5f
         s.blurType = BlurMaskFilter.Blur.OUTER
         assertEquals(1.5f, s.blur, 0.01f)
         assertEquals(BlurMaskFilter.Blur.OUTER, s.blurType)
-        assertTrue(s.drawAsOverlay)
+
     }
 
     @Test

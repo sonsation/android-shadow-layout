@@ -60,7 +60,7 @@ class ShadowLayoutTest {
         assertEquals(StrokeType.CENTER, stroke!!.strokeType)
         assertEquals(128, stroke.strokeAlpha)
         assertEquals(BlurMaskFilter.Blur.SOLID, stroke.blurType)
-        assertTrue(stroke.drawAsOverlay)
+
 
         val gradient = layout.getGradientInfo()
         assertNotNull(gradient)
@@ -154,8 +154,7 @@ class ShadowLayoutTest {
         layout.updateStrokeBlurType(BlurMaskFilter.Blur.OUTER)
         assertEquals(BlurMaskFilter.Blur.OUTER, layout.getStrokeInfo()?.blurType)
 
-        layout.updateStrokeDrawAsOverlay(true)
-        assertTrue(layout.getStrokeInfo()?.drawAsOverlay ?: false)
+
 
         layout.updateBackgroundRadiusHalf(true)
         assertTrue(layout.getRadiusInfo()?.radiusHalf ?: false)
@@ -338,7 +337,7 @@ class ShadowLayoutTest {
             stroke {
                 strokeColor = Color.BLACK
                 strokeWidth = 2f
-                drawAsOverlay = true
+
             }
         }
         clipLayout.layout(0, 0, 200, 200)
@@ -429,5 +428,74 @@ class ShadowLayoutTest {
         val bitmap = Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         layout.draw(canvas)
+    }
+
+    @Test
+    fun testLargeStrokeWidthWithShadowNotClipped() {
+        val layout = ShadowLayout(context)
+        layout.build {
+            renderMode(ShadowLayout.RENDER_MODE_BITMAP_CACHE)
+            backgroundColor(Color.WHITE)
+            stroke {
+                strokeColor = Color.BLACK
+                strokeWidth = 50f
+                strokeType = StrokeType.OUTSIDE
+            }
+            shadow {
+                blurSize = 20f
+                shadowColor = Color.GRAY
+            }
+        }
+        layout.layout(0, 0, 200, 200)
+        val bitmap = Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        layout.draw(canvas)
+
+        // For OUTSIDE stroke of width 50 and blur 20, maxOutset is at least 50 + 20 = 70.
+        // Unscaled width (200 + 70*2 + outsets) with resolution 0.5 should result in cache width > (200 + 140) * 0.5 = 170.
+        val cachedField = ShadowLayout::class.java.getDeclaredField("cachedBitmap").apply { isAccessible = true }
+        val cached = cachedField.get(layout) as? Bitmap
+        assertNotNull(cached)
+        assertTrue("Cached bitmap width should include stroke outset", cached!!.width >= 170)
+
+        // Also test CENTER stroke type
+        layout.updateStrokeType(StrokeType.CENTER)
+        layout.invalidate()
+        layout.draw(canvas)
+        val cachedCenter = cachedField.get(layout) as? Bitmap
+        assertNotNull(cachedCenter)
+        // For CENTER stroke of width 50, stroke outset is 25. Outset is at least 25 + 20 = 45.
+        assertTrue("Cached bitmap width for CENTER stroke should include half stroke width", cachedCenter!!.width >= 145)
+    }
+
+    @Test
+    fun testClipToOutlineWithOutsideStroke() {
+        val layout = ShadowLayout(context)
+        layout.build {
+            backgroundColor(Color.WHITE)
+            stroke {
+                strokeColor = Color.BLACK
+                strokeWidth = 20f
+                strokeType = StrokeType.OUTSIDE
+            }
+        }
+        layout.layout(0, 0, 200, 200)
+        val bitmap = Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        // Ensure clipToOutline draws cleanly without exception when clipOutLine is true
+        layout.draw(canvas)
+
+        val contentPathField = ShadowLayout::class.java.getDeclaredField("contentPath").apply { isAccessible = true }
+        val contentPath = contentPathField.get(layout) as? android.graphics.Path
+        assertNotNull(contentPath)
+        assertFalse(contentPath!!.isEmpty)
+
+        val bounds = android.graphics.RectF()
+        contentPath.computeBounds(bounds, true)
+        // For OUTSIDE stroke, contentPath bounds should match the view bounds [0, 0, 200, 200]
+        assertEquals(0f, bounds.left, 0.01f)
+        assertEquals(0f, bounds.top, 0.01f)
+        assertEquals(200f, bounds.right, 0.01f)
+        assertEquals(200f, bounds.bottom, 0.01f)
     }
 }

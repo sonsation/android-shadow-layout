@@ -16,7 +16,6 @@ import com.sonsation.library.utils.ViewHelper.parseGradientColors
 import com.sonsation.library.utils.ViewHelper.parseGradientPositions
 import com.sonsation.library.utils.ViewHelper.parseShadowArray
 import com.sonsation.library.utils.ViewHelper.toPx
-import com.sonsation.library.utils.ViewHelper.getInnerPath
 import com.sonsation.library.utils.addSmoothRoundRect
 import org.junit.Assert.*
 import org.junit.Before
@@ -181,15 +180,7 @@ class ViewHelperTest {
         assertEquals(127, getIntAlpha(0.5f))
     }
 
-    @Test
-    fun testGetInnerPath() {
-        val path = Path().apply {
-            addRect(0f, 0f, 100f, 100f, Path.Direction.CW)
-        }
-        val innerPath = path.getInnerPath(10f)
-        assertNotNull(innerPath)
-        assertFalse(innerPath.isEmpty)
-    }
+
 
     @Test
     fun testCornerEnum() {
