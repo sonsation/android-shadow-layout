@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
@@ -40,6 +42,12 @@ android {
         abortOnError = false
         checkReleaseBuilds = false
     }
+
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_17)
+        }
+    }
 }
 
 dependencies {
@@ -51,14 +59,10 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
-    implementation("androidx.recyclerview:recyclerview:1.3.2")
+    implementation(libs.androidx.recyclerview)
 
     testImplementation(libs.junit)
-    testImplementation("org.robolectric:robolectric:4.12.1")
-}
-
-kotlin {
-    jvmToolchain(17)
+    testImplementation(libs.robolectric.v4121)
 }
 
 android {
