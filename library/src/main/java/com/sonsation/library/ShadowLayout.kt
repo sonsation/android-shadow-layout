@@ -35,6 +35,14 @@ class ShadowLayout : FrameLayout {
         Path()
     }
 
+    private val innerClipPath by lazy {
+        Path()
+    }
+
+    private val innerClipRect by lazy {
+        RectF()
+    }
+
     private val pathMeasure by lazy {
         PathMeasure()
     }
@@ -468,9 +476,15 @@ class ShadowLayout : FrameLayout {
 
         canvas.drawPath(backgroundPath, backgroundPaint)
 
-        if (clipOutLine) {
+        val forceInnerClip = autoAdjustPadding && stroke?.isEnable == true
+
+        if (clipOutLine || forceInnerClip) {
             canvas.save()
-            canvas.clipPath(backgroundPath)
+            if (forceInnerClip) {
+                canvas.clipPath(innerClipPath)
+            } else {
+                canvas.clipPath(backgroundPath)
+            }
             super.dispatchDraw(canvas)
             canvas.restore()
         } else {
@@ -667,10 +681,10 @@ class ShadowLayout : FrameLayout {
                 }
                 StrokeType.OUTSIDE -> {
                     super.setPadding(left, top, right, bottom)
-                    isPathDirty = true
-                    invalidate()
                 }
             }
+            isPathDirty = true
+            invalidate()
             return
         }
 
@@ -700,10 +714,10 @@ class ShadowLayout : FrameLayout {
                 }
                 StrokeType.OUTSIDE -> {
                     super.setPaddingRelative(start, top, end, bottom)
-                    isPathDirty = true
-                    invalidate()
                 }
             }
+            isPathDirty = true
+            invalidate()
             return
         }
 
@@ -945,20 +959,16 @@ class ShadowLayout : FrameLayout {
                     val calStrokeWidth = stroke!!.strokeWidth.div(2f)
 
                     outlineRect.set(
-                        RectF(
-                            offset.left + calStrokeWidth,
-                            offset.top + calStrokeWidth,
-                            offset.right - calStrokeWidth,
-                            offset.bottom - calStrokeWidth
-                        )
+                        offset.left + calStrokeWidth,
+                        offset.top + calStrokeWidth,
+                        offset.right - calStrokeWidth,
+                        offset.bottom - calStrokeWidth
                     )
                     shadowRect.set(
-                        RectF(
-                            offset.left,
-                            offset.top,
-                            offset.right,
-                            offset.bottom
-                        )
+                        offset.left,
+                        offset.top,
+                        offset.right,
+                        offset.bottom
                     )
                 }
 
@@ -968,12 +978,10 @@ class ShadowLayout : FrameLayout {
 
                     outlineRect.set(offset)
                     shadowRect.set(
-                        RectF(
-                            offset.left - calStrokeWidth,
-                            offset.top - calStrokeWidth,
-                            offset.right + calStrokeWidth,
-                            offset.bottom + calStrokeWidth
-                        )
+                        offset.left - calStrokeWidth,
+                        offset.top - calStrokeWidth,
+                        offset.right + calStrokeWidth,
+                        offset.bottom + calStrokeWidth
                     )
                 }
 
@@ -982,20 +990,16 @@ class ShadowLayout : FrameLayout {
                     val calStrokeWidth = stroke!!.strokeWidth.div(2f)
 
                     outlineRect.set(
-                        RectF(
-                            offset.left - calStrokeWidth,
-                            offset.top - calStrokeWidth,
-                            offset.right + calStrokeWidth,
-                            offset.bottom + calStrokeWidth
-                        )
+                        offset.left - calStrokeWidth,
+                        offset.top - calStrokeWidth,
+                        offset.right + calStrokeWidth,
+                        offset.bottom + calStrokeWidth
                     )
                     shadowRect.set(
-                        RectF(
-                            offset.left - stroke!!.strokeWidth,
-                            offset.top - stroke!!.strokeWidth,
-                            offset.right + stroke!!.strokeWidth,
-                            offset.bottom + stroke!!.strokeWidth
-                        )
+                        offset.left - stroke!!.strokeWidth,
+                        offset.top - stroke!!.strokeWidth,
+                        offset.right + stroke!!.strokeWidth,
+                        offset.bottom + stroke!!.strokeWidth
                     )
                 }
             }
@@ -1133,11 +1137,43 @@ class ShadowLayout : FrameLayout {
 
             close()
         }
+
+        innerClipPath.apply {
+            reset()
+            innerClipRect.set(offset)
+            var innerRadiusOffset = 0f
+
+            if (stroke?.isEnable == true && autoAdjustPadding) {
+                when (stroke!!.strokeType) {
+                    StrokeType.INSIDE -> {
+                        innerClipRect.inset(stroke!!.strokeWidth, stroke!!.strokeWidth)
+                        innerRadiusOffset = -stroke!!.strokeWidth
+                    }
+                    StrokeType.CENTER -> {
+                        innerClipRect.inset(stroke!!.strokeWidth / 2f, stroke!!.strokeWidth / 2f)
+                        innerRadiusOffset = -(stroke!!.strokeWidth / 2f)
+                    }
+                    StrokeType.OUTSIDE -> {
+                        // No inset needed for OUTSIDE
+                    }
+                }
+            }
+
+            if (radius?.isEnable == true) {
+                addSmoothRoundRect(innerClipRect, radius!!, innerRadiusOffset)
+            } else {
+                addRect(innerClipRect, Path.Direction.CW)
+            }
+
+            close()
+        }
     }
 
     fun setAutoAdjustPadding(isEnable: Boolean) {
         autoAdjustPadding = isEnable
+        isPathDirty = true
         updatePadding()
+        invalidate()
     }
 
     inner class Builder {
