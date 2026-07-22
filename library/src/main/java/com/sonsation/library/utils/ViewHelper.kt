@@ -158,62 +158,13 @@ object ViewHelper {
 
         return (255 * alpha).toInt()
     }
-
-    fun Path.getInnerPath(strokeWidth: Float): Path {
-
-        val offset = strokeWidth / 2
-        val rect = RectF().apply {
-            computeBounds(this, true)
-            inset(offset, offset)
-        }
-        val pathMeasure = PathMeasure(this, false)
-
-        return Path().apply {
-
-            for (distance in 0 until pathMeasure.length.toInt()) {
-
-                val pos = FloatArray(2)
-                val tan = FloatArray(2)
-
-                pathMeasure.getPosTan(distance.toFloat(), pos, tan)
-
-                val dx = tan[0]
-                val dy = tan[1]
-
-                var normalX = -dy
-                var normalY = dx
-
-                val lengthNormal = sqrt((normalX * normalX + normalY * normalY).toDouble()).toFloat()
-
-                normalX /= lengthNormal
-                normalY /= lengthNormal
-
-                val innerX = pos[0] + normalX * offset
-                val innerY = pos[1] + normalY * offset
-
-                if (innerX < rect.left || innerX > rect.right) {
-                    continue
-                }
-
-                if (innerY < rect.top || innerY > rect.bottom) {
-                    continue
-                }
-
-                if (distance == 0) {
-                    moveTo(innerX, innerY)
-                } else {
-                    lineTo(innerX, innerY)
-                }
-            }
-        }
-    }
 }
 
 enum class Corner {
     TOP_LEFT, TOP_RIGHT, BOTTOM_RIGHT, BOTTOM_LEFT
 }
 
-fun Path.addSmoothRoundRect(rect: RectF, radius: Radius) {
+fun Path.addSmoothRoundRect(rect: RectF, radius: Radius, radiusOffset: Float = 0f) {
     reset()
 
     val smoothing = radius.cornerSmoothing.coerceIn(0f, 1f)
@@ -222,31 +173,31 @@ fun Path.addSmoothRoundRect(rect: RectF, radius: Radius) {
     val targetTopLeftRadius = if (radius.radiusHalf) {
         height.div(2f)
     } else {
-        radius.topLeftRadius * radius.radiusWeight
+        radius.topLeftRadius * radius.radiusWeight + radiusOffset
     }
     val targetTopRightRadius = if (radius.radiusHalf) {
         height.div(2f)
     } else {
-        radius.topRightRadius * radius.radiusWeight
+        radius.topRightRadius * radius.radiusWeight + radiusOffset
     }
     val targetBottomLeftRadius = if (radius.radiusHalf) {
         height.div(2f)
     } else {
-        radius.bottomLeftRadius * radius.radiusWeight
+        radius.bottomLeftRadius * radius.radiusWeight + radiusOffset
     }
     val targetBottomRightRadius = if (radius.radiusHalf) {
         height.div(2f)
     } else {
-        radius.bottomRightRadius * radius.radiusWeight
+        radius.bottomRightRadius * radius.radiusWeight + radiusOffset
     }
 
     val width = rect.width()
     val maxRadius = minOf(width, height) / 2f
 
-    val tl = minOf(targetTopLeftRadius, maxRadius)
-    val tr = minOf(targetTopRightRadius, maxRadius)
-    val br = minOf(targetBottomRightRadius, maxRadius)
-    val bl = minOf(targetBottomLeftRadius, maxRadius)
+    val tl = maxOf(0f, minOf(targetTopLeftRadius, maxRadius))
+    val tr = maxOf(0f, minOf(targetTopRightRadius, maxRadius))
+    val br = maxOf(0f, minOf(targetBottomRightRadius, maxRadius))
+    val bl = maxOf(0f, minOf(targetBottomLeftRadius, maxRadius))
 
     if (smoothing == 0f) {
         moveTo(rect.left + tl, rect.top)

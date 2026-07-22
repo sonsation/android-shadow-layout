@@ -9,7 +9,6 @@ import com.sonsation.library.effet.*
 import com.sonsation.library.model.Padding
 import com.sonsation.library.model.StrokeType
 import com.sonsation.library.utils.ViewHelper
-import com.sonsation.library.utils.ViewHelper.getInnerPath
 import com.sonsation.library.utils.addSmoothRoundRect
 import kotlin.math.abs
 
@@ -82,6 +81,17 @@ class ShadowLayout : FrameLayout {
 
     private var isPathDirty = true
     private var isPaintDirty = false
+
+    private val strokeOutset: Float
+        get() = if (stroke?.isEnable == true) {
+            when (stroke!!.strokeType) {
+                StrokeType.INSIDE -> 0f
+                StrokeType.CENTER -> stroke!!.strokeWidth / 2f
+                StrokeType.OUTSIDE -> stroke!!.strokeWidth
+            }
+        } else {
+            0f
+        }
 
     var autoAdjustPadding = false
         private set
@@ -170,7 +180,6 @@ class ShadowLayout : FrameLayout {
                     )
                 } ?: BlurMaskFilter.Blur.NORMAL
                 this.blur = a.getDimension(R.styleable.ShadowLayout_stroke_blur, 0f)
-                this.drawAsOverlay = a.getBoolean(R.styleable.ShadowLayout_stroke_draw_as_overlay, false)
                 this.strokeStart = a.getFloat(R.styleable.ShadowLayout_stroke_start, 0f)
                 this.strokeProgress = a.getFloat(R.styleable.ShadowLayout_stroke_progress, 1f)
             }
@@ -334,10 +343,12 @@ class ShadowLayout : FrameLayout {
         val h = layoutRect.height()
         if (w <= 0f || h <= 0f) return
 
-        var maxOutsetLeft = 0f
-        var maxOutsetTop = 0f
-        var maxOutsetRight = 0f
-        var maxOutsetBottom = 0f
+        val strokeOutset = this.strokeOutset
+
+        var maxOutsetLeft = strokeOutset
+        var maxOutsetTop = strokeOutset
+        var maxOutsetRight = strokeOutset
+        var maxOutsetBottom = strokeOutset
 
         shadows.forEach { shadow ->
             if (shadow.isEnable) {
@@ -346,10 +357,10 @@ class ShadowLayout : FrameLayout {
                 val ox = shadow.shadowOffsetX
                 val oy = shadow.shadowOffsetY
 
-                val leftBleed = (blur + spread) - ox
-                val rightBleed = (blur + spread) + ox
-                val topBleed = (blur + spread) - oy
-                val bottomBleed = (blur + spread) + oy
+                val leftBleed = strokeOutset + (blur + spread) - ox
+                val rightBleed = strokeOutset + (blur + spread) + ox
+                val topBleed = strokeOutset + (blur + spread) - oy
+                val bottomBleed = strokeOutset + (blur + spread) + oy
 
                 if (leftBleed > maxOutsetLeft) maxOutsetLeft = leftBleed
                 if (rightBleed > maxOutsetRight) maxOutsetRight = rightBleed
@@ -387,7 +398,7 @@ class ShadowLayout : FrameLayout {
         cacheCanvas?.let { cv ->
             cv.save()
             cv.scale(shadowBitmapResolution, shadowBitmapResolution)
-            cv.translate(cacheOutsetLeft, cacheOutsetTop)
+            cv.translate(cacheOutsetLeft - layoutRect.left, cacheOutsetTop - layoutRect.top)
             
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 cv.clipOutPath(backgroundPath)
@@ -418,7 +429,7 @@ class ShadowLayout : FrameLayout {
             }
             shadows.forEach { shadow ->
                 if (isPathDirty) {
-                    shadow.updatePath(shadowRect, radius)
+                    shadow.updatePath(shadowRect, radius, strokeOutset)
                 }
                 shadow.updatePaint()
             }
@@ -458,15 +469,7 @@ class ShadowLayout : FrameLayout {
         canvas.drawPath(backgroundPath, backgroundPaint)
 
         if (stroke?.isEnable == true) {
-
-            if (stroke?.drawAsOverlay == true) {
-                canvas.drawPath(strokePath, outlinePaint)
-                canvas.clipPath(backgroundPath)
-                super.dispatchDraw(canvas)
-                return
-            } else {
-                canvas.drawPath(strokePath, outlinePaint)
-            }
+            canvas.drawPath(strokePath, outlinePaint)
         }
 
         if (clipOutLine) {
@@ -575,14 +578,7 @@ class ShadowLayout : FrameLayout {
         offsetY: Float,
         color: Int
     ) {
-        shadows[position].apply {
-            this.blurSize = blurSize
-            this.shadowColor = color
-            this.shadowOffsetX = offsetX
-            this.shadowOffsetY = offsetY
-        }
-        isPathDirty = true
-        invalidate()
+        updateBackgroundShadow(position, blurSize, offsetX, offsetY, shadows[position].shadowSpread, color)
     }
 
     fun updateBackgroundShadow(
@@ -628,6 +624,12 @@ class ShadowLayout : FrameLayout {
         color: Int
     ) {
         updateBackgroundShadow(0, blurSize, offsetX, offsetY, spread, color)
+    }
+
+    fun updateShadowBlurType(blurType: BlurMaskFilter.Blur) {
+        this.shadows.forEach { it.updateShadowBlurType(blurType) }
+        isPaintDirty = true
+        invalidate()
     }
 
     fun updateStrokeWidth(strokeWidth: Float) {
@@ -713,13 +715,13 @@ class ShadowLayout : FrameLayout {
 
     fun updateGradientColor(startColor: Int, centerColor: Int, endColor: Int) {
         this.gradient?.updateGradientColor(startColor, centerColor, endColor)
-        isPathDirty = true
+        isPaintDirty = true
         invalidate()
     }
 
     fun updateGradientColor(startColor: Int, endColor: Int) {
         this.gradient?.updateGradientColor(startColor, endColor)
-        isPathDirty = true
+        isPaintDirty = true
         invalidate()
     }
 
@@ -731,25 +733,25 @@ class ShadowLayout : FrameLayout {
 
     fun updateGradientColors(colors: IntArray?) {
         this.gradient?.updateGradientColors(colors)
-        isPathDirty = true
+        isPaintDirty = true
         invalidate()
     }
 
     fun updateGradientPositions(positions: FloatArray?) {
         this.gradient?.gradientPositions = positions
-        isPathDirty = true
+        isPaintDirty = true
         invalidate()
     }
 
     fun updateLocalMatrix(matrix: Matrix?) {
         this.gradient?.updateLocalMatrix(matrix)
-        isPathDirty = true
+        isPaintDirty = true
         invalidate()
     }
 
     fun updateGradientShader(shader: LinearGradient?) {
         gradient?.updateGradientShader(shader)
-        isPathDirty = true
+        isPaintDirty = true
         invalidate()
     }
 
@@ -767,13 +769,13 @@ class ShadowLayout : FrameLayout {
 
     fun updateStrokeGradientColor(startColor: Int, centerColor: Int, endColor: Int) {
         this.strokeGradient?.updateGradientColor(startColor, centerColor, endColor)
-        isPathDirty = true
+        isPaintDirty = true
         invalidate()
     }
 
     fun updateStrokeGradientColor(startColor: Int, endColor: Int) {
         this.strokeGradient?.updateGradientColor(startColor, endColor)
-        isPathDirty = true
+        isPaintDirty = true
         invalidate()
     }
 
@@ -785,25 +787,25 @@ class ShadowLayout : FrameLayout {
 
     fun updateStrokeGradientColors(colors: IntArray?) {
         this.strokeGradient?.updateGradientColors(colors)
-        isPathDirty = true
+        isPaintDirty = true
         invalidate()
     }
 
     fun updateStrokeGradientPositions(positions: FloatArray?) {
         this.strokeGradient?.updateGradientPositions(positions)
-        isPathDirty = true
+        isPaintDirty = true
         invalidate()
     }
 
     fun updateStrokeLocalMatrix(matrix: Matrix?) {
         this.strokeGradient?.updateLocalMatrix(matrix)
-        isPathDirty = true
+        isPaintDirty = true
         invalidate()
     }
 
     fun updateStrokeGradientShader(shader: LinearGradient?) {
         this.strokeGradient?.updateGradientShader(shader)
-        isPathDirty = true
+        isPaintDirty = true
         invalidate()
     }
 
@@ -827,13 +829,13 @@ class ShadowLayout : FrameLayout {
 
     fun updateBackgroundBlur(blur: Float) {
         this.backgroundBlur = blur
-        isPathDirty = true
+        isPaintDirty = true
         invalidate()
     }
 
     fun updateBackgroundBlurType(blurType: BlurMaskFilter.Blur) {
         this.backgroundBlurType = blurType
-        isPathDirty = true
+        isPaintDirty = true
         invalidate()
     }
 
@@ -845,15 +847,11 @@ class ShadowLayout : FrameLayout {
 
     fun updateStrokeBlurType(blurType: BlurMaskFilter.Blur) {
         this.stroke?.blurType = blurType
-        isPathDirty = true
+        isPaintDirty = true
         invalidate()
     }
 
-    fun updateStrokeDrawAsOverlay(drawAsOverlay: Boolean) {
-        this.stroke?.drawAsOverlay = drawAsOverlay
-        isPathDirty = true
-        invalidate()
-    }
+
 
     fun updateStrokeType(strokeType: StrokeType) {
         this.stroke?.strokeType = strokeType
@@ -1054,11 +1052,21 @@ class ShadowLayout : FrameLayout {
             }
         }
 
+        val strokeRadiusOffset = if (stroke?.isEnable == true) {
+            when (stroke!!.strokeType) {
+                StrokeType.INSIDE -> -(stroke!!.strokeWidth / 2f)
+                StrokeType.CENTER -> 0f
+                StrokeType.OUTSIDE -> stroke!!.strokeWidth / 2f
+            }
+        } else {
+            0f
+        }
+
         outlinePath.apply {
             reset()
 
             if (radius?.isEnable == true) {
-                addSmoothRoundRect(outlineRect, radius!!)
+                addSmoothRoundRect(outlineRect, radius!!, strokeRadiusOffset)
             } else {
                 addRect(outlineRect, Path.Direction.CW)
             }
@@ -1102,17 +1110,11 @@ class ShadowLayout : FrameLayout {
 
             reset()
 
-            if (stroke?.isEnable == true) {
-                val newPath = outlinePath.getInnerPath(stroke!!.strokeWidth)
-                newPath.computeBounds(targetRect, true)
-                addPath(newPath)
+            targetRect.set(offset)
+            if (radius?.isEnable == true) {
+                addSmoothRoundRect(offset, radius!!)
             } else {
-                targetRect.set(outlineRect)
-                if (radius?.isEnable == true) {
-                    addSmoothRoundRect(outlineRect, radius!!)
-                } else {
-                    addRect(outlineRect, Path.Direction.CW)
-                }
+                addRect(offset, Path.Direction.CW)
             }
 
             backgroundPaint.shader = if (gradient?.isEnable == true) {

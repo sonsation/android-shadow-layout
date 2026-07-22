@@ -11,7 +11,6 @@ class Stroke(var strokeWidth: Float = 0f,
              var strokeAlpha: Int = 100
     ) {
 
-    var drawAsOverlay = false
     var blur: Float = 0f
     var blurType = BlurMaskFilter.Blur.NORMAL
     var strokeStart: Float = 0f

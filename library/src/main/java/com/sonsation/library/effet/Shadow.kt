@@ -9,7 +9,8 @@ class Shadow(
     var shadowColor: Int = ViewHelper.NOT_SET_COLOR,
     var shadowOffsetX: Float = 0f,
     var shadowOffsetY: Float = 0f,
-    var shadowSpread: Float = 0f
+    var shadowSpread: Float = 0f,
+    var blurType: BlurMaskFilter.Blur = BlurMaskFilter.Blur.NORMAL,
 ) {
 
     val paint by lazy { Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL } }
@@ -17,6 +18,7 @@ class Shadow(
     private val rect by lazy { RectF() }
 
     private var cachedBlurSize: Float? = null
+    private var cachedBlurType: BlurMaskFilter.Blur? = null
     private var cachedShadowColor: Int? = null
 
     val isEnable: Boolean
@@ -28,17 +30,18 @@ class Shadow(
             cachedShadowColor = shadowColor
         }
         
-        if (cachedBlurSize != blurSize) {
+        if (cachedBlurSize != blurSize || cachedBlurType != blurType) {
             if (blurSize != 0f) {
-                paint.maskFilter = BlurMaskFilter(blurSize, BlurMaskFilter.Blur.NORMAL)
+                paint.maskFilter = BlurMaskFilter(blurSize, blurType)
             } else {
                 paint.maskFilter = null
             }
             cachedBlurSize = blurSize
+            cachedBlurType = blurType
         }
     }
 
-    fun updatePath(offset: RectF, radius: Radius?) {
+    fun updatePath(offset: RectF, radius: Radius?, radiusOffset: Float = 0f) {
 
         rect.set(
             offset.left + shadowOffsetX,
@@ -55,7 +58,7 @@ class Shadow(
             reset()
 
             if (radius?.isEnable == true) {
-                addSmoothRoundRect(rect, radius)
+                addSmoothRoundRect(rect, radius, radiusOffset + shadowSpread)
             } else {
                 addRect(rect, Path.Direction.CW)
             }
@@ -82,6 +85,10 @@ class Shadow(
 
     fun updateShadowBlurSize(size: Float) {
         this.blurSize = size
+    }
+
+    fun updateShadowBlurType(blurType: BlurMaskFilter.Blur) {
+        this.blurType = blurType
     }
 
     fun draw(canvas: Canvas) {
