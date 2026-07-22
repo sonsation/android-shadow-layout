@@ -136,6 +136,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Stroke
+
+        bind.switchAutoAdjustPadding.isChecked = bind.shadowLayout.autoAdjustPadding
+        bind.switchAutoAdjustPadding.setOnCheckedChangeListener { _, isChecked ->
+            bind.shadowLayout.setAutoAdjustPadding(isChecked)
+        }
         bind.rgStrokeType.setOnCheckedChangeListener { _, checkedId ->
             when (checkedId) {
                 R.id.rb_inside -> bind.shadowLayout.updateStrokeType(com.sonsation.library.model.StrokeType.INSIDE)
@@ -191,6 +196,27 @@ class MainActivity : AppCompatActivity() {
             } else {
                 bind.shadowLayout.updateStrokeGradientColor(Color.TRANSPARENT, Color.TRANSPARENT)
             }
+        }
+
+        // Misc
+        bind.rgRenderMode.setOnCheckedChangeListener { _, checkedId ->
+            when (checkedId) {
+                R.id.rb_render_default -> bind.shadowLayout.updateRenderMode(com.sonsation.library.ShadowLayout.RENDER_MODE_DEFAULT)
+                R.id.rb_render_bitmap -> bind.shadowLayout.updateRenderMode(com.sonsation.library.ShadowLayout.RENDER_MODE_BITMAP_CACHE)
+                R.id.rb_render_hardware -> bind.shadowLayout.updateRenderMode(com.sonsation.library.ShadowLayout.RENDER_MODE_HARDWARE_LAYER)
+            }
+        }
+        bind.rgBlurType.setOnCheckedChangeListener { _, checkedId ->
+            val blurType = when (checkedId) {
+                R.id.rb_blur_normal -> android.graphics.BlurMaskFilter.Blur.NORMAL
+                R.id.rb_blur_solid -> android.graphics.BlurMaskFilter.Blur.SOLID
+                R.id.rb_blur_outer -> android.graphics.BlurMaskFilter.Blur.OUTER
+                R.id.rb_blur_inner -> android.graphics.BlurMaskFilter.Blur.INNER
+                else -> android.graphics.BlurMaskFilter.Blur.NORMAL
+            }
+            bind.shadowLayout.updateBackgroundBlurType(blurType)
+            bind.shadowLayout.updateStrokeBlurType(blurType)
+            bind.shadowLayout.updateShadowBlurType(blurType)
         }
     }
 
