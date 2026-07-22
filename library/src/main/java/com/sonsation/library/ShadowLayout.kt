@@ -352,11 +352,12 @@ class ShadowLayout : FrameLayout {
         if (w <= 0f || h <= 0f) return
 
         val strokeOutset = this.strokeOutset
+        val strokeBlur = stroke?.takeIf { it.isEnable }?.blur ?: 0f
 
-        var maxOutsetLeft = strokeOutset
-        var maxOutsetTop = strokeOutset
-        var maxOutsetRight = strokeOutset
-        var maxOutsetBottom = strokeOutset
+        var maxOutsetLeft = strokeOutset + strokeBlur
+        var maxOutsetTop = strokeOutset + strokeBlur
+        var maxOutsetRight = strokeOutset + strokeBlur
+        var maxOutsetBottom = strokeOutset + strokeBlur
 
         shadows.forEach { shadow ->
             if (shadow.isEnable) {
@@ -607,7 +608,9 @@ class ShadowLayout : FrameLayout {
         color: Int
     ) {
         val shadow = shadows[position]
-        val geometryChanged = shadow.blurSize != blurSize || shadow.shadowOffsetX != offsetX || shadow.shadowOffsetY != offsetY || shadow.shadowSpread != spread
+        val wasEnable = shadow.isEnable
+        val isEnableChanged = wasEnable != (color != ViewHelper.NOT_SET_COLOR)
+        val geometryChanged = shadow.blurSize != blurSize || shadow.shadowOffsetX != offsetX || shadow.shadowOffsetY != offsetY || shadow.shadowSpread != spread || isEnableChanged
         
         shadow.apply {
             this.blurSize = blurSize
@@ -725,7 +728,16 @@ class ShadowLayout : FrameLayout {
     }
 
     fun updateStrokeColor(color: Int) {
+        val wasEnable = stroke?.isEnable == true
         stroke?.updateStrokeColor(color)
+        
+        if (wasEnable != (stroke?.isEnable == true)) {
+            isPathDirty = true
+            if (autoAdjustPadding) {
+                updatePadding()
+            }
+        }
+        
         isPaintDirty = true
         invalidate()
     }
@@ -942,27 +954,29 @@ class ShadowLayout : FrameLayout {
 
     private fun setOutlineAndBackground(offset: RectF) {
 
-        if (stroke?.isEnable == true) {
+        val width = abs(offset.right - offset.left)
+        val height = abs(offset.bottom - offset.top)
 
-            val width = abs(offset.right - offset.left)
-            val height = abs(offset.bottom - offset.top)
+        val safeStrokeWidth = if (stroke?.isEnable == true) {
+            when (stroke!!.strokeType) {
+                StrokeType.INSIDE -> minOf(stroke!!.strokeWidth, width / 2f, height / 2f)
+                StrokeType.CENTER -> minOf(stroke!!.strokeWidth, width, height)
+                StrokeType.OUTSIDE -> stroke!!.strokeWidth
+            }
+        } else {
+            0f
+        }
+        val safeStrokeWidthHalf = safeStrokeWidth / 2f
+
+        if (stroke?.isEnable == true) {
 
             when (stroke!!.strokeType) {
                 StrokeType.INSIDE -> {
-
-                    val maxAllowedWidth = width / 2f
-                    val maxAllowedHeight = height / 2f
-
-                    stroke!!.strokeWidth =
-                        minOf(stroke!!.strokeWidth, maxAllowedWidth, maxAllowedHeight)
-
-                    val calStrokeWidth = stroke!!.strokeWidth.div(2f)
-
                     outlineRect.set(
-                        offset.left + calStrokeWidth,
-                        offset.top + calStrokeWidth,
-                        offset.right - calStrokeWidth,
-                        offset.bottom - calStrokeWidth
+                        offset.left + safeStrokeWidthHalf,
+                        offset.top + safeStrokeWidthHalf,
+                        offset.right - safeStrokeWidthHalf,
+                        offset.bottom - safeStrokeWidthHalf
                     )
                     shadowRect.set(
                         offset.left,
@@ -973,33 +987,27 @@ class ShadowLayout : FrameLayout {
                 }
 
                 StrokeType.CENTER -> {
-
-                    val calStrokeWidth = stroke!!.strokeWidth.div(2f)
-
                     outlineRect.set(offset)
                     shadowRect.set(
-                        offset.left - calStrokeWidth,
-                        offset.top - calStrokeWidth,
-                        offset.right + calStrokeWidth,
-                        offset.bottom + calStrokeWidth
+                        offset.left - safeStrokeWidthHalf,
+                        offset.top - safeStrokeWidthHalf,
+                        offset.right + safeStrokeWidthHalf,
+                        offset.bottom + safeStrokeWidthHalf
                     )
                 }
 
                 StrokeType.OUTSIDE -> {
-
-                    val calStrokeWidth = stroke!!.strokeWidth.div(2f)
-
                     outlineRect.set(
-                        offset.left - calStrokeWidth,
-                        offset.top - calStrokeWidth,
-                        offset.right + calStrokeWidth,
-                        offset.bottom + calStrokeWidth
+                        offset.left - safeStrokeWidthHalf,
+                        offset.top - safeStrokeWidthHalf,
+                        offset.right + safeStrokeWidthHalf,
+                        offset.bottom + safeStrokeWidthHalf
                     )
                     shadowRect.set(
-                        offset.left - stroke!!.strokeWidth,
-                        offset.top - stroke!!.strokeWidth,
-                        offset.right + stroke!!.strokeWidth,
-                        offset.bottom + stroke!!.strokeWidth
+                        offset.left - safeStrokeWidth,
+                        offset.top - safeStrokeWidth,
+                        offset.right + safeStrokeWidth,
+                        offset.bottom + safeStrokeWidth
                     )
                 }
             }
@@ -1061,9 +1069,9 @@ class ShadowLayout : FrameLayout {
 
         val strokeRadiusOffset = if (stroke?.isEnable == true) {
             when (stroke!!.strokeType) {
-                StrokeType.INSIDE -> -(stroke!!.strokeWidth / 2f)
+                StrokeType.INSIDE -> -safeStrokeWidthHalf
                 StrokeType.CENTER -> 0f
-                StrokeType.OUTSIDE -> stroke!!.strokeWidth / 2f
+                StrokeType.OUTSIDE -> safeStrokeWidthHalf
             }
         } else {
             0f
@@ -1146,12 +1154,12 @@ class ShadowLayout : FrameLayout {
             if (stroke?.isEnable == true && autoAdjustPadding) {
                 when (stroke!!.strokeType) {
                     StrokeType.INSIDE -> {
-                        innerClipRect.inset(stroke!!.strokeWidth, stroke!!.strokeWidth)
-                        innerRadiusOffset = -stroke!!.strokeWidth
+                        innerClipRect.inset(safeStrokeWidth, safeStrokeWidth)
+                        innerRadiusOffset = -safeStrokeWidth
                     }
                     StrokeType.CENTER -> {
-                        innerClipRect.inset(stroke!!.strokeWidth / 2f, stroke!!.strokeWidth / 2f)
-                        innerRadiusOffset = -(stroke!!.strokeWidth / 2f)
+                        innerClipRect.inset(safeStrokeWidthHalf, safeStrokeWidthHalf)
+                        innerRadiusOffset = -safeStrokeWidthHalf
                     }
                     StrokeType.OUTSIDE -> {
                         // No inset needed for OUTSIDE
