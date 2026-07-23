@@ -458,6 +458,56 @@
                         </RadioGroup>
                     </LinearLayout>
 
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:paddingTop="8dp"
+                        android:paddingBottom="8dp">
+
+                        <TextView
+                            android:layout_width="100dp"
+                            android:layout_height="wrap_content"
+                            android:text="Stroke Blur Type"
+                            android:textSize="14sp"
+                            android:textColor="#333333" />
+
+                        <RadioGroup
+                            android:id="@+id/rg_stroke_blur_type"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
+
+                            <RadioButton
+                                android:id="@+id/rb_stroke_blur_normal"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:checked="true"
+                                android:text="Normal" />
+
+                            <RadioButton
+                                android:id="@+id/rb_stroke_blur_solid"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Solid" />
+
+                            <RadioButton
+                                android:id="@+id/rb_stroke_blur_outer"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Outer" />
+
+                            <RadioButton
+                                android:id="@+id/rb_stroke_blur_inner"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Inner" />
+                        </RadioGroup>
+                    </LinearLayout>
+
                 </LinearLayout>
             </com.sonsation.library.ShadowLayout>
 

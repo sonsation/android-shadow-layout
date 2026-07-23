@@ -231,8 +231,17 @@ class MainActivity : AppCompatActivity() {
                 else -> android.graphics.BlurMaskFilter.Blur.NORMAL
             }
             bind.shadowLayout.updateBackgroundBlurType(blurType)
-            bind.shadowLayout.updateStrokeBlurType(blurType)
             bind.shadowLayout.updateShadowBlurType(blurType)
+        }
+        bind.rgStrokeBlurType.setOnCheckedChangeListener { _, checkedId ->
+            val blurType = when (checkedId) {
+                R.id.rb_stroke_blur_normal -> android.graphics.BlurMaskFilter.Blur.NORMAL
+                R.id.rb_stroke_blur_solid -> android.graphics.BlurMaskFilter.Blur.SOLID
+                R.id.rb_stroke_blur_outer -> android.graphics.BlurMaskFilter.Blur.OUTER
+                R.id.rb_stroke_blur_inner -> android.graphics.BlurMaskFilter.Blur.INNER
+                else -> android.graphics.BlurMaskFilter.Blur.NORMAL
+            }
+            bind.shadowLayout.updateStrokeBlurType(blurType)
         }
     }
 
