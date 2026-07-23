@@ -31,10 +31,15 @@ object ViewHelper {
             return null
 
         split.forEach {
-            list.add(Color.parseColor(it))
+            try {
+                list.add(Color.parseColor(it))
+            } catch (e: Exception) {
+                // Color.parseColor throws IllegalArgumentException for bad hex and
+                // StringIndexOutOfBoundsException for empty strings; skip either.
+            }
         }
 
-        return list
+        return list.ifEmpty { null }
     }
 
     fun parseGradientPositions(arrays: String?): List<Float>? {
@@ -54,10 +59,14 @@ object ViewHelper {
             return null
 
         split.forEach {
-            list.add(it.toFloat())
+            try {
+                list.add(it.toFloat())
+            } catch (e: Exception) {
+                // Skip malformed position tokens instead of crashing.
+            }
         }
 
-        return list
+        return list.ifEmpty { null }
     }
 
     fun parseShadowArray(context: Context, arrays: String?): List<Shadow>? {
@@ -78,40 +87,44 @@ object ViewHelper {
             return null
         }
 
-        split.map { it.trim() }
+        split.forEach { entry ->
 
-        split.forEach {
+            val splitArray = entry.split(",").map { it.trim() }
 
-            val splitArray = it.split(",")
-
-            val shadow = if (splitArray.size == 4) {
-                try {
-                    val blurSize = splitArray[0].toFloat().toPx(context)
-                    val offsetX = splitArray[1].toFloat().toPx(context)
-                    val offsetY = splitArray[2].toFloat().toPx(context)
-                    val color = Color.parseColor(splitArray[3])
-
-                    Shadow(blurSize, color, offsetX, offsetY, 0f)
-                } catch (e: NumberFormatException) {
-                    Shadow(0f, Color.WHITE, 0f, 0f, 0f)
+            // Guard against malformed entries: a wrong field count or an invalid
+            // number/color token skips the entry instead of crashing (bad token
+            // types throw NumberFormatException / IllegalArgumentException, and a
+            // short field list would otherwise throw IndexOutOfBoundsException).
+            try {
+                val shadow = when {
+                    splitArray.size >= 5 -> {
+                        val blurSize = splitArray[0].toFloat().toPx(context)
+                        val offsetX = splitArray[1].toFloat().toPx(context)
+                        val offsetY = splitArray[2].toFloat().toPx(context)
+                        val spread = splitArray[3].toFloat().toPx(context)
+                        val color = Color.parseColor(splitArray[4])
+                        Shadow(blurSize, color, offsetX, offsetY, spread)
+                    }
+                    splitArray.size == 4 -> {
+                        val blurSize = splitArray[0].toFloat().toPx(context)
+                        val offsetX = splitArray[1].toFloat().toPx(context)
+                        val offsetY = splitArray[2].toFloat().toPx(context)
+                        val color = Color.parseColor(splitArray[3])
+                        Shadow(blurSize, color, offsetX, offsetY, 0f)
+                    }
+                    else -> null
                 }
-            } else {
-                try {
-                    val blurSize = splitArray[0].toFloat().toPx(context)
-                    val offsetX = splitArray[1].toFloat().toPx(context)
-                    val offsetY = splitArray[2].toFloat().toPx(context)
-                    val spread = splitArray[3].toFloat().toPx(context)
-                    val color = Color.parseColor(splitArray[4])
-                    Shadow(blurSize, color, offsetX, offsetY, spread)
-                } catch (e: NumberFormatException) {
-                    Shadow(0f, Color.WHITE, 0f, 0f, 0f)
+
+                if (shadow != null) {
+                    list.add(shadow)
                 }
+            } catch (e: Exception) {
+                // Any bad token (bad number, bad/empty color) skips this entry
+                // instead of crashing. Field count is already guarded above.
             }
-
-            list.add(shadow)
         }
 
-        return list
+        return list.ifEmpty { null }
     }
 
     fun Float.toPx(context: Context): Float {

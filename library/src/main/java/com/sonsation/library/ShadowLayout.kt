@@ -110,7 +110,8 @@ class ShadowLayout : FrameLayout {
     // The stroke width actually used for both geometry and painting. Guards against
     // negative values and caps INSIDE/CENTER strokes so they cannot exceed the view
     // (a width larger than the shape would otherwise overflow it). OUTSIDE grows
-    // outward and has no view-relative bound by design.
+    // outward, so it is capped to the larger view dimension to keep the shadow
+    // bitmap cache from exploding into an OutOfMemoryError on extreme inputs.
     private val safeStrokeWidth: Float
         get() {
             val s = stroke ?: return 0f
@@ -121,7 +122,7 @@ class ShadowLayout : FrameLayout {
             return when (s.strokeType) {
                 StrokeType.INSIDE -> minOf(requested, width / 2f, height / 2f)
                 StrokeType.CENTER -> minOf(requested, width, height)
-                StrokeType.OUTSIDE -> requested
+                StrokeType.OUTSIDE -> minOf(requested, maxOf(width, height))
             }
         }
 
@@ -548,7 +549,9 @@ class ShadowLayout : FrameLayout {
 
 
     private fun updatePadding() {
-        setPadding(padding.start, padding.top, padding.end, padding.bottom)
+        // Use the relative variant so start/end map to the correct physical side
+        // under RTL (the stored padding is start/end, not left/right).
+        setPaddingRelative(padding.start, padding.top, padding.end, padding.bottom)
     }
 
     fun updateBackgroundColor(color: Int) {

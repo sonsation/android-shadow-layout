@@ -47,13 +47,14 @@ class ViewHelperTest {
         assertEquals(Color.GREEN, colors[1])
         assertEquals(Color.BLUE, colors[2])
 
-        // Empty splits
-        try {
-            parseGradientColors(",")
-            fail("Expected Exception")
-        } catch (e: Exception) {
-            // Expected
-        }
+        // Malformed tokens are skipped; all-invalid input returns null (no crash).
+        assertNull(parseGradientColors(","))
+        // A mix keeps the valid colors and skips the bad ones.
+        val mixedColors = parseGradientColors("#FF0000, notacolor, #0000FF")
+        assertNotNull(mixedColors)
+        assertEquals(2, mixedColors!!.size)
+        assertEquals(Color.RED, mixedColors[0])
+        assertEquals(Color.BLUE, mixedColors[1])
     }
 
     @Test
@@ -68,12 +69,14 @@ class ViewHelperTest {
         assertEquals(0.5f, positions[1], 0.01f)
         assertEquals(1.0f, positions[2], 0.01f)
 
-        try {
-            parseGradientPositions(",")
-            fail("Expected Exception")
-        } catch (e: Exception) {
-            // Expected
-        }
+        // Malformed tokens are skipped; all-invalid input returns null (no crash).
+        assertNull(parseGradientPositions(","))
+        // A mix keeps the valid positions and skips the bad ones.
+        val mixedPositions = parseGradientPositions("0.0, x, 1.0")
+        assertNotNull(mixedPositions)
+        assertEquals(2, mixedPositions!!.size)
+        assertEquals(0.0f, mixedPositions[0], 0.01f)
+        assertEquals(1.0f, mixedPositions[1], 0.01f)
     }
 
     @Test
@@ -108,31 +111,24 @@ class ViewHelperTest {
         assertNotNull(multiple)
         assertEquals(2, multiple!!.size)
 
-        // NumberFormatException in 4 elements
-        val badShadow4 = parseShadowArray(context, "{abc,5,5,#FF0000}")
-        assertNotNull(badShadow4)
-        assertEquals(Color.WHITE, badShadow4!![0].shadowColor)
-        assertEquals(0f, badShadow4[0].blurSize, 0.01f)
+        // Bad numeric token in a 4-field entry: the sole entry is skipped -> null.
+        assertNull(parseShadowArray(context, "{abc,5,5,#FF0000}"))
 
-        // NumberFormatException in 5 elements
-        val badShadow5 = parseShadowArray(context, "{10,5,5,abc,#FF0000}")
-        assertNotNull(badShadow5)
-        assertEquals(Color.WHITE, badShadow5!![0].shadowColor)
-        assertEquals(0f, badShadow5[0].blurSize, 0.01f)
+        // Bad numeric token in a 5-field entry: skipped -> null.
+        assertNull(parseShadowArray(context, "{10,5,5,abc,#FF0000}"))
 
-        // Empty splits check
-        val emptySplitResult = parseShadowArray(context, ",")
-        assertNotNull(emptySplitResult)
-        assertEquals(1, emptySplitResult!!.size)
-        assertEquals(Color.WHITE, emptySplitResult[0].shadowColor)
+        // Empty/blank entry is skipped -> null (previously produced a phantom shadow).
+        assertNull(parseShadowArray(context, ","))
 
-        // Test IndexOutOfBoundsException trigger
-        try {
-            parseShadowArray(context, "{1.0,1.0}")
-            fail("Expected IndexOutOfBoundsException")
-        } catch (e: IndexOutOfBoundsException) {
-            // Expected
-        }
+        // Too few fields: entry is skipped, no exception (previously crashed with
+        // IndexOutOfBoundsException).
+        assertNull(parseShadowArray(context, "{1.0,1.0}"))
+
+        // A mix keeps the valid entry and skips the malformed one.
+        val mixedShadows = parseShadowArray(context, "{abc,5,5,#FF0000}, {20,10,10,2,#00FF00}")
+        assertNotNull(mixedShadows)
+        assertEquals(1, mixedShadows!!.size)
+        assertEquals(Color.GREEN, mixedShadows[0].shadowColor)
     }
 
     @Test
