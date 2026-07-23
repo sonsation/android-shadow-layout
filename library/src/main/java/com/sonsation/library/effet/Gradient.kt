@@ -22,6 +22,19 @@ class Gradient(
 
     private var gradientShader: LinearGradient? = null
 
+    // Cache of the last built shader, reused while neither the gradient params nor
+    // the target bounds change (localMatrix is reapplied on every return, so it is
+    // not part of the cache key and never invalidates it).
+    private var cachedShader: LinearGradient? = null
+    private var cacheLeft = 0f
+    private var cacheTop = 0f
+    private var cacheRight = 0f
+    private var cacheBottom = 0f
+
+    private fun invalidateShaderCache() {
+        cachedShader = null
+    }
+
     fun getGradientShader(offsetLeft: Float, offsetTop: Float, offsetRight: Float, offsetBottom: Float): LinearGradient {
 
         if (gradientShader != null) {
@@ -30,7 +43,13 @@ class Gradient(
             }
         }
 
-        val colors = if (gradientColors != null && gradientColors?.isNotEmpty() == true) {
+        cachedShader?.let {
+            if (cacheLeft == offsetLeft && cacheTop == offsetTop && cacheRight == offsetRight && cacheBottom == offsetBottom) {
+                return it.apply { setLocalMatrix(localMatrix) }
+            }
+        }
+
+        val rawColors = if (gradientColors != null && gradientColors?.isNotEmpty() == true) {
             gradientColors!!
         } else {
             if (gradientCenterColor == ViewHelper.NOT_SET_COLOR) {
@@ -40,14 +59,19 @@ class Gradient(
             }
         }
 
-        var realAngle = 0
-
-        if (gradientAngle > 0) {
-            val trueAngle = gradientAngle % 360
-            realAngle = trueAngle + 360
+        // LinearGradient requires at least two colors; duplicate a single color so a
+        // one-element gradient_colors input renders as a solid fill instead of crashing.
+        val colors = if (rawColors.size < 2) {
+            intArrayOf(rawColors.first(), rawColors.first())
+        } else {
+            rawColors
         }
 
-        val trueAngle = realAngle % 360
+        // positions must be null or exactly match the color count, otherwise
+        // LinearGradient throws. Drop mismatched positions to stay safe.
+        val positions = gradientPositions?.takeIf { it.size == colors.size }
+
+        val trueAngle = if (gradientAngle > 0) gradientAngle % 360 else 0
 
         val width = offsetRight - offsetLeft
         val height = offsetBottom - offsetTop
@@ -55,40 +79,46 @@ class Gradient(
         return when (trueAngle / 45) {
             0 -> {
                 val x = offsetRight + gradientOffsetX
-                LinearGradient(x, 0f, offsetLeft, 0f, colors, gradientPositions, Shader.TileMode.CLAMP)
+                LinearGradient(x, 0f, offsetLeft, 0f, colors, positions, Shader.TileMode.CLAMP)
             }
             1 -> {
                 val x = offsetRight + gradientOffsetX
                 val y = offsetTop + gradientOffsetY
-                LinearGradient(x, offsetTop, offsetLeft, y, colors, gradientPositions, Shader.TileMode.CLAMP)
+                LinearGradient(x, offsetTop, offsetLeft, y, colors, positions, Shader.TileMode.CLAMP)
             }
             2 -> {
                 val y = offsetTop + gradientOffsetY
-                LinearGradient(0f, y, 0f, offsetBottom, colors, gradientPositions, Shader.TileMode.CLAMP)
+                LinearGradient(0f, y, 0f, offsetBottom, colors, positions, Shader.TileMode.CLAMP)
             }
             3 -> {
                 val x = width + gradientOffsetX
                 val y = (height * 2) + gradientOffsetY
-                LinearGradient(0f, y, x, offsetBottom, colors, gradientPositions, Shader.TileMode.CLAMP)
+                LinearGradient(0f, y, x, offsetBottom, colors, positions, Shader.TileMode.CLAMP)
             }
             4 -> {
                 val y = offsetBottom + gradientOffsetY
-                LinearGradient(0f, y, 0f, 0f, colors, gradientPositions, Shader.TileMode.CLAMP)
+                LinearGradient(0f, y, 0f, 0f, colors, positions, Shader.TileMode.CLAMP)
             }
             5 -> {
                 val x = offsetRight + gradientOffsetX
                 val y = offsetTop + gradientOffsetY
-                LinearGradient(0f, y, x, offsetTop, colors, gradientPositions, Shader.TileMode.CLAMP)
+                LinearGradient(0f, y, x, offsetTop, colors, positions, Shader.TileMode.CLAMP)
             }
             6 -> {
                 val x = offsetTop + gradientOffsetX
-                LinearGradient(x, 0f, offsetRight, 0f, colors, gradientPositions, Shader.TileMode.CLAMP)
+                LinearGradient(x, 0f, offsetRight, 0f, colors, positions, Shader.TileMode.CLAMP)
             }
             else -> {
                 val x = offsetRight + gradientOffsetX
                 val y = offsetTop + gradientOffsetY
-                LinearGradient(0f, y, x, offsetBottom, colors, gradientPositions, Shader.TileMode.CLAMP)
+                LinearGradient(0f, y, x, offsetBottom, colors, positions, Shader.TileMode.CLAMP)
             }
+        }.also { built ->
+            cachedShader = built
+            cacheLeft = offsetLeft
+            cacheTop = offsetTop
+            cacheRight = offsetRight
+            cacheBottom = offsetBottom
         }.apply {
             if (localMatrix != null) {
                 setLocalMatrix(localMatrix)
@@ -100,6 +130,7 @@ class Gradient(
         this.gradientStartColor = startColor
         this.gradientCenterColor = centerColor
         this.gradientEndColor = endColor
+        invalidateShaderCache()
     }
 
     fun updateGradientColor(startColor: Int, endColor: Int) {
@@ -108,14 +139,17 @@ class Gradient(
 
     fun updateGradientAngle(angle: Int) {
         this.gradientAngle = angle
+        invalidateShaderCache()
     }
 
     fun updateGradientOffsetX(offset: Float) {
         this.gradientOffsetX = offset
+        invalidateShaderCache()
     }
 
     fun updateGradientOffsetY(offset: Float) {
         this.gradientOffsetY = offset
+        invalidateShaderCache()
     }
 
     fun updateLocalMatrix(matrix: Matrix?) {
@@ -124,10 +158,12 @@ class Gradient(
 
     fun updateGradientPositions(positions: FloatArray?) {
         this.gradientPositions = positions
+        invalidateShaderCache()
     }
 
     fun updateGradientColors(colors: IntArray?) {
         this.gradientColors = colors
+        invalidateShaderCache()
     }
 
     fun updateGradientShader(shader: LinearGradient?) {

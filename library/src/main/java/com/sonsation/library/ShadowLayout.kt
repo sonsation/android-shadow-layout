@@ -55,6 +55,12 @@ class ShadowLayout : FrameLayout {
         Paint()
     }
 
+    // Bilinear filtering smooths the cached shadow bitmap when it is scaled back up
+    // from shadowBitmapResolution (< 1) instead of showing hard pixel steps.
+    private val cacheBlitPaint by lazy {
+        Paint(Paint.FILTER_BITMAP_FLAG)
+    }
+
     private val backgroundPath by lazy {
         Path()
     }
@@ -87,15 +93,44 @@ class ShadowLayout : FrameLayout {
     private var cachedBitmap: Bitmap? = null
     private var cacheCanvas: Canvas? = null
 
+    // Cached BlurMaskFilter inputs so the filter is only reallocated when the blur
+    // actually changes (mirrors the caching Shadow.updatePaint already does).
+    private var cachedStrokeBlur: Float? = null
+    private var cachedStrokeBlurType: BlurMaskFilter.Blur? = null
+    private var cachedBackgroundBlur: Float? = null
+    private var cachedBackgroundBlurType: BlurMaskFilter.Blur? = null
+
     private var isPathDirty = true
     private var isPaintDirty = false
+    // The bitmap cache only holds shadows. It must be regenerated on any geometry
+    // change (always implied by isPathDirty) or when a shadow's paint changes, but
+    // NOT for background/stroke/gradient color changes that never touch the cache.
+    private var isCacheDirty = true
+
+    // The stroke width actually used for both geometry and painting. Guards against
+    // negative values and caps INSIDE/CENTER strokes so they cannot exceed the view
+    // (a width larger than the shape would otherwise overflow it). OUTSIDE grows
+    // outward and has no view-relative bound by design.
+    private val safeStrokeWidth: Float
+        get() {
+            val s = stroke ?: return 0f
+            if (!s.isEnable) return 0f
+            val requested = s.strokeWidth.coerceAtLeast(0f)
+            val width = layoutRect.width()
+            val height = layoutRect.height()
+            return when (s.strokeType) {
+                StrokeType.INSIDE -> minOf(requested, width / 2f, height / 2f)
+                StrokeType.CENTER -> minOf(requested, width, height)
+                StrokeType.OUTSIDE -> requested
+            }
+        }
 
     private val strokeOutset: Float
         get() = if (stroke?.isEnable == true) {
             when (stroke!!.strokeType) {
                 StrokeType.INSIDE -> 0f
-                StrokeType.CENTER -> stroke!!.strokeWidth / 2f
-                StrokeType.OUTSIDE -> stroke!!.strokeWidth
+                StrokeType.CENTER -> safeStrokeWidth / 2f
+                StrokeType.OUTSIDE -> safeStrokeWidth
             }
         } else {
             0f
@@ -442,18 +477,19 @@ class ShadowLayout : FrameLayout {
                 }
                 shadow.updatePaint()
             }
-            if (renderMode == RENDER_MODE_BITMAP_CACHE) {
+            if (renderMode == RENDER_MODE_BITMAP_CACHE && (isPathDirty || isCacheDirty)) {
                 updateBitmapCache()
             }
             isPathDirty = false
             isPaintDirty = false
+            isCacheDirty = false
         }
 
         if (renderMode == RENDER_MODE_BITMAP_CACHE && cachedBitmap != null) {
             canvas.save()
             val inverseScale = 1f / shadowBitmapResolution
             canvas.scale(inverseScale, inverseScale)
-            canvas.drawBitmap(cachedBitmap!!, -cacheOutsetLeft * shadowBitmapResolution, -cacheOutsetTop * shadowBitmapResolution, null)
+            canvas.drawBitmap(cachedBitmap!!, -cacheOutsetLeft * shadowBitmapResolution, -cacheOutsetTop * shadowBitmapResolution, cacheBlitPaint)
             canvas.restore()
         } else {
             try {
@@ -623,7 +659,9 @@ class ShadowLayout : FrameLayout {
         if (geometryChanged) {
             isPathDirty = true
         } else {
+            // Only the shadow color changed: repaint the cached shadow bitmap.
             isPaintDirty = true
+            isCacheDirty = true
         }
         invalidate()
     }
@@ -649,6 +687,7 @@ class ShadowLayout : FrameLayout {
     fun updateShadowBlurType(blurType: BlurMaskFilter.Blur) {
         this.shadows.forEach { it.updateShadowBlurType(blurType) }
         isPaintDirty = true
+        isCacheDirty = true
         invalidate()
     }
 
@@ -701,7 +740,7 @@ class ShadowLayout : FrameLayout {
         bottom: Int
     ) {
 
-        padding.setPadding(left, top, right, bottom)
+        padding.setPadding(start, top, end, bottom)
 
         if (autoAdjustPadding && stroke?.isEnable == true) {
             val strokeWidth = stroke?.takeIf { it.isEnable }?.strokeWidth ?: 0f
@@ -767,7 +806,7 @@ class ShadowLayout : FrameLayout {
     }
 
     fun updateGradientPositions(positions: FloatArray?) {
-        this.gradient?.gradientPositions = positions
+        this.gradient?.updateGradientPositions(positions)
         isPaintDirty = true
         invalidate()
     }
@@ -921,6 +960,22 @@ class ShadowLayout : FrameLayout {
         return this.stroke
     }
 
+    private fun applyStrokeBlur() {
+        val blur = stroke?.blur ?: 0f
+        val type = stroke?.blurType ?: BlurMaskFilter.Blur.NORMAL
+        if (cachedStrokeBlur == blur && cachedStrokeBlurType == type) return
+        outlinePaint.maskFilter = if (blur != 0f) BlurMaskFilter(blur, type) else null
+        cachedStrokeBlur = blur
+        cachedStrokeBlurType = type
+    }
+
+    private fun applyBackgroundBlur() {
+        if (cachedBackgroundBlur == backgroundBlur && cachedBackgroundBlurType == backgroundBlurType) return
+        backgroundPaint.maskFilter = if (backgroundBlur != 0f) BlurMaskFilter(backgroundBlur, backgroundBlurType) else null
+        cachedBackgroundBlur = backgroundBlur
+        cachedBackgroundBlurType = backgroundBlurType
+    }
+
     private fun updatePaintsOnly() {
         if (stroke?.isEnable == true) {
             with(outlinePaint) {
@@ -929,43 +984,32 @@ class ShadowLayout : FrameLayout {
                 style = Paint.Style.STROKE
                 color = targetColor
                 alpha = stroke!!.strokeAlpha
-                strokeWidth = stroke!!.strokeWidth
+                strokeWidth = safeStrokeWidth
                 shader = if (strokeGradient?.isEnable == true) {
                     strokeGradient?.getGradientShader(
                         outlineRect.left, outlineRect.top, outlineRect.right, outlineRect.bottom
                     )
                 } else null
-                maskFilter = if (stroke!!.blur != 0f) BlurMaskFilter(stroke!!.blur, stroke!!.blurType) else null
             }
+            applyStrokeBlur()
         }
         with(backgroundPaint) {
             val targetColor = if (gradient?.isEnable == true) Color.WHITE else backgroundColor
             isAntiAlias = true
             color = targetColor
             style = Paint.Style.FILL
-            maskFilter = if (backgroundBlur != 0f) BlurMaskFilter(backgroundBlur, backgroundBlurType) else null
             shader = if (gradient?.isEnable == true) {
                 gradient?.getGradientShader(
                     targetRect.left, targetRect.top, targetRect.right, targetRect.bottom
                 )
             } else null
         }
+        applyBackgroundBlur()
     }
 
     private fun setOutlineAndBackground(offset: RectF) {
 
-        val width = abs(offset.right - offset.left)
-        val height = abs(offset.bottom - offset.top)
-
-        val safeStrokeWidth = if (stroke?.isEnable == true) {
-            when (stroke!!.strokeType) {
-                StrokeType.INSIDE -> minOf(stroke!!.strokeWidth, width / 2f, height / 2f)
-                StrokeType.CENTER -> minOf(stroke!!.strokeWidth, width, height)
-                StrokeType.OUTSIDE -> stroke!!.strokeWidth
-            }
-        } else {
-            0f
-        }
+        val safeStrokeWidth = this.safeStrokeWidth
         val safeStrokeWidthHalf = safeStrokeWidth / 2f
 
         if (stroke?.isEnable == true) {
@@ -1030,7 +1074,7 @@ class ShadowLayout : FrameLayout {
                 style = Paint.Style.STROKE
                 color = targetColor
                 alpha = stroke!!.strokeAlpha
-                strokeWidth = stroke!!.strokeWidth
+                strokeWidth = safeStrokeWidth
                 shader = if (strokeGradient?.isEnable == true) {
                     strokeGradient?.getGradientShader(
                         outlineRect.left,
@@ -1042,12 +1086,8 @@ class ShadowLayout : FrameLayout {
                     null
                 }
 
-                maskFilter = if (stroke!!.blur != 0f) {
-                    BlurMaskFilter(stroke!!.blur, stroke!!.blurType)
-                } else {
-                    null
-                }
             }
+            applyStrokeBlur()
         }
 
         with(backgroundPaint) {
@@ -1059,13 +1099,8 @@ class ShadowLayout : FrameLayout {
             isAntiAlias = true
             color = targetColor
             style = Paint.Style.FILL
-
-            maskFilter = if (backgroundBlur != 0f) {
-                BlurMaskFilter(backgroundBlur, backgroundBlurType)
-            } else {
-                null
-            }
         }
+        applyBackgroundBlur()
 
         val strokeRadiusOffset = if (stroke?.isEnable == true) {
             when (stroke!!.strokeType) {

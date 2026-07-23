@@ -30,8 +30,6 @@ object ViewHelper {
         if (split.isEmpty())
             return null
 
-        split.map { it.trim() }
-
         split.forEach {
             list.add(Color.parseColor(it))
         }
@@ -54,8 +52,6 @@ object ViewHelper {
 
         if (split.isEmpty())
             return null
-
-        split.map { it.trim() }
 
         split.forEach {
             list.add(it.toFloat())
