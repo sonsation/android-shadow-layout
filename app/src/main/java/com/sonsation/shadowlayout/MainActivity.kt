@@ -189,7 +189,9 @@ class MainActivity : AppCompatActivity() {
                 bind.shadowLayout.updateGradientColor(Color.parseColor("#FFD54F"), Color.parseColor("#FF5252"))
                 bind.shadowLayout.updateGradientAngle(angle)
             } else {
-                bind.shadowLayout.updateGradientColor(Color.TRANSPARENT, Color.TRANSPARENT)
+                // Reset the angle to -1 so the gradient is treated as disabled
+                // (isEnable == false) and the background falls back to backgroundColor.
+                bind.shadowLayout.updateGradientAngle(-1)
             }
         }
 
@@ -206,7 +208,9 @@ class MainActivity : AppCompatActivity() {
                 bind.shadowLayout.updateStrokeGradientColor(Color.parseColor("#00E676"), Color.parseColor("#2979FF"))
                 bind.shadowLayout.updateStrokeGradientAngle(angle)
             } else {
-                bind.shadowLayout.updateStrokeGradientColor(Color.TRANSPARENT, Color.TRANSPARENT)
+                // Reset the angle to -1 so the gradient is treated as disabled
+                // (isEnable == false) and the stroke falls back to strokeColor.
+                bind.shadowLayout.updateStrokeGradientAngle(-1)
             }
         }
 
