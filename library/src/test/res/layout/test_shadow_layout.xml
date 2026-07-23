@@ -24,7 +24,6 @@
         app:stroke_alpha="128"
         app:stroke_blur="2dp"
         app:stroke_blur_type="SOLID"
-        app:stroke_draw_as_overlay="true"
         app:gradient_start_color="#FF0000FF"
         app:gradient_center_color="#FF00FFFF"
         app:gradient_end_color="#FFFF00FF"
