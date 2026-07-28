@@ -48,6 +48,25 @@
         </attr>
         <attr name="stroke_start" format="float"/>
         <attr name="stroke_progress" format="float"/>
+        <!--
+            Where stroke_start / stroke_progress are measured from, listed clockwise.
+            The first token is the edge, the second is which end of that edge, so a corner sits
+            between two values: TOP_END is right before the top-end radius, END_TOP is right after it.
+        -->
+        <attr name="stroke_origin" format="enum">
+            <enum name="TOP" value="0"/>
+            <enum name="TOP_END" value="1"/>
+            <enum name="END_TOP" value="2"/>
+            <enum name="END" value="3"/>
+            <enum name="END_BOTTOM" value="4"/>
+            <enum name="BOTTOM_END" value="5"/>
+            <enum name="BOTTOM" value="6"/>
+            <enum name="BOTTOM_START" value="7"/>
+            <enum name="START_BOTTOM" value="8"/>
+            <enum name="START" value="9"/>
+            <enum name="START_TOP" value="10"/>
+            <enum name="TOP_START" value="11"/>
+        </attr>
 
         <attr name="shadow_color" format="color" />
         <attr name="shadow_offset_x" format="dimension" />

@@ -2,6 +2,7 @@ package com.sonsation.library.effet
 
 import android.graphics.BlurMaskFilter
 import android.graphics.Paint
+import com.sonsation.library.model.StrokeOrigin
 import com.sonsation.library.model.StrokeType
 import com.sonsation.library.utils.ViewHelper
 
@@ -15,7 +16,8 @@ class Stroke(var strokeWidth: Float = 0f,
     var blurType = BlurMaskFilter.Blur.NORMAL
     var strokeStart: Float = 0f
     var strokeProgress: Float = 1f
-    
+    var strokeOrigin: StrokeOrigin = StrokeOrigin.TOP
+
     val isEnable: Boolean
         get() = strokeWidth != 0f && strokeColor != ViewHelper.NOT_SET_COLOR
 
@@ -37,5 +39,9 @@ class Stroke(var strokeWidth: Float = 0f,
 
     fun updateStrokeProgress(progress: Float) {
         this.strokeProgress = progress
+    }
+
+    fun updateStrokeOrigin(origin: StrokeOrigin) {
+        this.strokeOrigin = origin
     }
 }

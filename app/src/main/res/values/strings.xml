@@ -1,3 +1,19 @@
 <resources>
     <string name="app_name">ShadowLayout</string>
+
+    <!-- Kept in the same clockwise order as StrokeOrigin, so the spinner position is the ordinal. -->
+    <string-array name="stroke_origin_entries">
+        <item>TOP</item>
+        <item>TOP_END</item>
+        <item>END_TOP</item>
+        <item>END</item>
+        <item>END_BOTTOM</item>
+        <item>BOTTOM_END</item>
+        <item>BOTTOM</item>
+        <item>BOTTOM_START</item>
+        <item>START_BOTTOM</item>
+        <item>START</item>
+        <item>START_TOP</item>
+        <item>TOP_START</item>
+    </string-array>
 </resources>

@@ -7,6 +7,7 @@ import android.graphics.PathMeasure
 import android.graphics.RectF
 import com.sonsation.library.effet.*
 import com.sonsation.library.model.ARGB
+import com.sonsation.library.model.StrokeOrigin
 import java.lang.NumberFormatException
 import kotlin.math.sqrt
 
@@ -173,7 +174,19 @@ enum class Corner {
     TOP_LEFT, TOP_RIGHT, BOTTOM_RIGHT, BOTTOM_LEFT
 }
 
-fun Path.addSmoothRoundRect(rect: RectF, radius: Radius, radiusOffset: Float = 0f) {
+/**
+ * Builds the rounded rect outline clockwise, starting from [origin].
+ *
+ * The shape is identical whichever origin is used - only the point the contour starts from moves,
+ * which is what makes distance 0 of a PathMeasure line up with the requested anchor. [origin] must
+ * already be resolved for the layout direction (see [StrokeOrigin.resolve]).
+ */
+fun Path.addSmoothRoundRect(
+    rect: RectF,
+    radius: Radius,
+    radiusOffset: Float = 0f,
+    origin: StrokeOrigin = StrokeOrigin.TOP_START
+) {
     reset()
 
     val smoothing = radius.cornerSmoothing.coerceIn(0f, 1f)
@@ -208,61 +221,138 @@ fun Path.addSmoothRoundRect(rect: RectF, radius: Radius, radiusOffset: Float = 0
     val br = maxOf(0f, minOf(targetBottomRightRadius, maxRadius))
     val bl = maxOf(0f, minOf(targetBottomLeftRadius, maxRadius))
 
-    if (smoothing == 0f) {
-        moveTo(rect.left + tl, rect.top)
-        
-        if (tr > 0) arcTo(rect.right - 2 * tr, rect.top, rect.right, rect.top + 2 * tr, -90f, 90f, false)
-        else lineTo(rect.right, rect.top)
-        
-        if (br > 0) arcTo(rect.right - 2 * br, rect.bottom - 2 * br, rect.right, rect.bottom, 0f, 90f, false)
-        else lineTo(rect.right, rect.bottom)
-        
-        if (bl > 0) arcTo(rect.left, rect.bottom - 2 * bl, rect.left + 2 * bl, rect.bottom, 90f, 90f, false)
-        else lineTo(rect.left, rect.bottom)
-        
-        if (tl > 0) arcTo(rect.left, rect.top, rect.left + 2 * tl, rect.top + 2 * tl, 180f, 90f, false)
-        else lineTo(rect.left, rect.top)
-        
-        close()
+    // How far from each rect corner the straight edge hands over to the corner itself. With
+    // smoothing the handover starts earlier than the radius, which is why the two differ.
+    val tlOffset = if (smoothing == 0f) tl else getCornerOffset(tl, smoothing, maxRadius)
+    val trOffset = if (smoothing == 0f) tr else getCornerOffset(tr, smoothing, maxRadius)
+    val brOffset = if (smoothing == 0f) br else getCornerOffset(br, smoothing, maxRadius)
+    val blOffset = if (smoothing == 0f) bl else getCornerOffset(bl, smoothing, maxRadius)
+
+    // Contour elements clockwise: 0 top edge, 1 top-right corner, 2 right edge,
+    // 3 bottom-right corner, 4 bottom edge, 5 bottom-left corner, 6 left edge, 7 top-left corner.
+    // Every origin sits on one of the four edges, so the anchor only ever splits a straight run.
+    // No corner offset can exceed maxRadius (half the shorter side), which is why the edge centers
+    // below always land on the straight part and never need clamping into the corner.
+    val anchorEdge: Int
+    val anchorX: Float
+    val anchorY: Float
+
+    when (origin) {
+        StrokeOrigin.TOP_START -> {
+            anchorEdge = 0
+            anchorX = rect.left + tlOffset
+            anchorY = rect.top
+        }
+        StrokeOrigin.TOP -> {
+            anchorEdge = 0
+            anchorX = rect.centerX()
+            anchorY = rect.top
+        }
+        StrokeOrigin.TOP_END -> {
+            anchorEdge = 0
+            anchorX = rect.right - trOffset
+            anchorY = rect.top
+        }
+        StrokeOrigin.END_TOP -> {
+            anchorEdge = 2
+            anchorX = rect.right
+            anchorY = rect.top + trOffset
+        }
+        StrokeOrigin.END -> {
+            anchorEdge = 2
+            anchorX = rect.right
+            anchorY = rect.centerY()
+        }
+        StrokeOrigin.END_BOTTOM -> {
+            anchorEdge = 2
+            anchorX = rect.right
+            anchorY = rect.bottom - brOffset
+        }
+        StrokeOrigin.BOTTOM_END -> {
+            anchorEdge = 4
+            anchorX = rect.right - brOffset
+            anchorY = rect.bottom
+        }
+        StrokeOrigin.BOTTOM -> {
+            anchorEdge = 4
+            anchorX = rect.centerX()
+            anchorY = rect.bottom
+        }
+        StrokeOrigin.BOTTOM_START -> {
+            anchorEdge = 4
+            anchorX = rect.left + blOffset
+            anchorY = rect.bottom
+        }
+        StrokeOrigin.START_BOTTOM -> {
+            anchorEdge = 6
+            anchorX = rect.left
+            anchorY = rect.bottom - blOffset
+        }
+        StrokeOrigin.START -> {
+            anchorEdge = 6
+            anchorX = rect.left
+            anchorY = rect.centerY()
+        }
+        StrokeOrigin.START_TOP -> {
+            anchorEdge = 6
+            anchorX = rect.left
+            anchorY = rect.top + tlOffset
+        }
+    }
+
+    moveTo(anchorX, anchorY)
+
+    // The anchor's own edge is drawn first (its tail) and the walk lands back on that edge's
+    // start point, so the leading part of it closes the contour.
+    for (step in 0 until 8) {
+        when ((anchorEdge + step) % 8) {
+            0 -> lineTo(rect.right - trOffset, rect.top)
+            1 -> drawCorner(rect.right, rect.top, tr, trOffset, Corner.TOP_RIGHT, smoothing)
+            2 -> lineTo(rect.right, rect.bottom - brOffset)
+            3 -> drawCorner(rect.right, rect.bottom, br, brOffset, Corner.BOTTOM_RIGHT, smoothing)
+            4 -> lineTo(rect.left + blOffset, rect.bottom)
+            5 -> drawCorner(rect.left, rect.bottom, bl, blOffset, Corner.BOTTOM_LEFT, smoothing)
+            6 -> lineTo(rect.left, rect.top + tlOffset)
+            else -> drawCorner(rect.left, rect.top, tl, tlOffset, Corner.TOP_LEFT, smoothing)
+        }
+    }
+
+    lineTo(anchorX, anchorY)
+    close()
+}
+
+private fun Path.drawCorner(
+    cornerX: Float, cornerY: Float,
+    radius: Float, offset: Float,
+    corner: Corner,
+    smoothing: Float
+) {
+    // A zero radius corner has no length: the edge before it already ended on the corner point
+    // and the edge after it starts there, so emitting anything would just be a degenerate segment.
+    if (radius <= 0f) {
         return
     }
 
+    if (smoothing != 0f) {
+        drawSmoothCorner(cornerX, cornerY, radius, offset, corner)
+        return
+    }
 
-    val tlOffset = getCornerOffset(tl, smoothing, maxRadius)
-    moveTo(rect.left + tlOffset, rect.top)
-
-    val trOffset = getCornerOffset(tr, smoothing, maxRadius)
-    lineTo(rect.right - trOffset, rect.top)
-    drawSmoothCorner(
-        rect.right, rect.top,
-        tr, trOffset,
-        Corner.TOP_RIGHT
-    )
-
-    val brOffset = getCornerOffset(br, smoothing, maxRadius)
-    lineTo(rect.right, rect.bottom - brOffset)
-    drawSmoothCorner(
-        rect.right, rect.bottom,
-        br, brOffset,
-        Corner.BOTTOM_RIGHT
-    )
-
-    val blOffset = getCornerOffset(bl, smoothing, maxRadius)
-    lineTo(rect.left + blOffset, rect.bottom)
-    drawSmoothCorner(
-        rect.left, rect.bottom,
-        bl, blOffset,
-        Corner.BOTTOM_LEFT
-    )
-
-    lineTo(rect.left, rect.top + tlOffset)
-    drawSmoothCorner(
-        rect.left, rect.top,
-        tl, tlOffset,
-        Corner.TOP_LEFT
-    )
-
-    close()
+    val diameter = 2 * radius
+    when (corner) {
+        Corner.TOP_RIGHT -> arcTo(
+            cornerX - diameter, cornerY, cornerX, cornerY + diameter, -90f, 90f, false
+        )
+        Corner.BOTTOM_RIGHT -> arcTo(
+            cornerX - diameter, cornerY - diameter, cornerX, cornerY, 0f, 90f, false
+        )
+        Corner.BOTTOM_LEFT -> arcTo(
+            cornerX, cornerY - diameter, cornerX + diameter, cornerY, 90f, 90f, false
+        )
+        Corner.TOP_LEFT -> arcTo(
+            cornerX, cornerY, cornerX + diameter, cornerY + diameter, 180f, 90f, false
+        )
+    }
 }
 
 private fun getCornerOffset(radius: Float, smoothing: Float, maxOffset: Float): Float {

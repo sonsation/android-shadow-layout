@@ -7,6 +7,7 @@ import android.util.AttributeSet
 import android.widget.FrameLayout
 import com.sonsation.library.effet.*
 import com.sonsation.library.model.Padding
+import com.sonsation.library.model.StrokeOrigin
 import com.sonsation.library.model.StrokeType
 import com.sonsation.library.utils.ViewHelper
 import com.sonsation.library.utils.addSmoothRoundRect
@@ -47,10 +48,6 @@ class ShadowLayout : FrameLayout {
         PathMeasure()
     }
 
-    private val pathPos by lazy {
-        FloatArray(2)
-    }
-
     private val backgroundPaint by lazy {
         Paint()
     }
@@ -81,6 +78,9 @@ class ShadowLayout : FrameLayout {
         const val RENDER_MODE_DEFAULT = 0
         const val RENDER_MODE_BITMAP_CACHE = 1
         const val RENDER_MODE_HARDWARE_LAYER = 2
+
+        // Lets the square outline go through the same origin aware builder as the rounded one.
+        private val NO_RADIUS = Radius(0f)
     }
 
     var renderMode = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
@@ -226,6 +226,9 @@ class ShadowLayout : FrameLayout {
                 this.blur = a.getDimension(R.styleable.ShadowLayout_stroke_blur, 0f)
                 this.strokeStart = a.getFloat(R.styleable.ShadowLayout_stroke_start, 0f)
                 this.strokeProgress = a.getFloat(R.styleable.ShadowLayout_stroke_progress, 1f)
+                this.strokeOrigin = StrokeOrigin.from(
+                    a.getInt(R.styleable.ShadowLayout_stroke_origin, StrokeOrigin.TOP.value)
+                )
             }
 
             val allRadius = a.getDimension(R.styleable.ShadowLayout_background_radius, 0f)
@@ -545,6 +548,13 @@ class ShadowLayout : FrameLayout {
         val height = abs(bottom - top).toFloat()
         layoutRect.set(0f, 0f, width, height)
         isPathDirty = true
+    }
+
+    override fun onRtlPropertiesChanged(layoutDirection: Int) {
+        super.onRtlPropertiesChanged(layoutDirection)
+        // A start/end stroke origin mirrors with the layout direction.
+        isPathDirty = true
+        invalidate()
     }
 
 
@@ -951,6 +961,12 @@ class ShadowLayout : FrameLayout {
         invalidate()
     }
 
+    fun updateStrokeOrigin(origin: StrokeOrigin) {
+        this.stroke?.strokeOrigin = origin
+        isPathDirty = true
+        invalidate()
+    }
+
     fun getGradientInfo(): Gradient? {
         return this.gradient
     }
@@ -1115,13 +1131,18 @@ class ShadowLayout : FrameLayout {
             0f
         }
 
+        // outlinePath only feeds the stroke, so it is built starting from the stroke origin - the
+        // shape is unchanged, but distance 0 of pathMeasure then lands on the requested anchor.
+        val strokeOrigin = (stroke?.strokeOrigin ?: StrokeOrigin.TOP)
+            .resolve(layoutDirection == LAYOUT_DIRECTION_RTL)
+
         outlinePath.apply {
             reset()
 
             if (radius?.isEnable == true) {
-                addSmoothRoundRect(outlineRect, radius!!, strokeRadiusOffset)
+                addSmoothRoundRect(outlineRect, radius!!, strokeRadiusOffset, strokeOrigin)
             } else {
-                addRect(outlineRect, Path.Direction.CW)
+                addSmoothRoundRect(outlineRect, NO_RADIUS, 0f, strokeOrigin)
             }
 
             close()
@@ -1139,11 +1160,7 @@ class ShadowLayout : FrameLayout {
                 pathMeasure.setPath(outlinePath, false)
                 val length = pathMeasure.length
 
-                pathMeasure.getPosTan(0f, pathPos, null)
-                var topCenterOffset = outlineRect.centerX() - pathPos[0]
-                if (topCenterOffset < 0) topCenterOffset += length
-
-                val startDistance = (startRatio * length + topCenterOffset) % length
+                val startDistance = startRatio * length
                 val endDistance = startDistance + lengthRatio * length
 
                 if (endDistance > length) {
