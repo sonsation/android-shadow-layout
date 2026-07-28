@@ -191,6 +191,7 @@ app:shadow_array="{10,0,4,10,#c8c8c8}, {10,0,4,10,#000000}"
     app:stroke_blur="10dp"
     app:stroke_blur_type="INNER"
     app:stroke_alpha="255"
+    app:stroke_origin="TOP"
     app:stroke_start="0.0"
     app:stroke_progress="1.0">
 
@@ -214,7 +215,8 @@ app:shadow_array="{10,0,4,10,#c8c8c8}, {10,0,4,10,#000000}"
 | `app:stroke_blur`      | The blur radius applied to the stroke. Example: `10dp`.                                                                     |
 | `app:stroke_blur_type` | Type of blur applied to the stroke. Options: `INNER`, `OUTER`, `SOLID`. Default: `INNER`.                                   |
 | `app:stroke_alpha`     | The transparency level of the stroke, ranging from `0` (completely transparent) to `255` (fully opaque). Default: `255`.    |
-| `app:stroke_start`     | The starting point of the stroke as a ratio of the path length, ranging from `0.0` to `1.0`. Default: `0.0`.                |
+| `app:stroke_origin`    | The point on the outline that `stroke_start` and `stroke_progress` are measured from. Default: `TOP`. See [Stroke Origin](#stroke-origin). |
+| `app:stroke_start`     | The starting point of the stroke as a ratio of the path length, measured clockwise from `stroke_origin`, ranging from `0.0` to `1.0`. Default: `0.0`. |
 | `app:stroke_progress`  | The drawn length of the stroke as a ratio of the total path length, ranging from `0.0` to `1.0`. Default: `1.0`.            |
 | `app:autoAdjustPadding`| If `true`, automatically adjusts the view's padding to accommodate the stroke width, preventing the content from being covered by the stroke. Default: `false`. |
 
@@ -224,6 +226,32 @@ app:shadow_array="{10,0,4,10,#c8c8c8}, {10,0,4,10,#000000}"
 - **INSIDE**: The stroke is drawn inside the view boundary, reducing the available space for the content.  
 - **CENTER**: The stroke is drawn evenly across the boundary edge (default).  
 - **OUTSIDE**: The stroke is drawn outside the view boundary, extending outward.  
+
+### Stroke Origin
+Sets where the stroke sweep begins. The first token names an edge and the second token names which
+end of that edge, so a corner is bracketed by two values: `TOP_END` is the point where the top edge
+stops (right before the top-end corner radius begins) and `END_TOP` is where that same radius
+finishes. `START` / `END` follow the layout direction and mirror automatically in RTL.
+
+```
+      TOP_START        TOP       TOP_END
+          ●-------------●-------------●
+         /                             \
+START_TOP●                             ● END_TOP
+         |                             |
+   START ●                             ● END
+         |                             |
+START_BOTTOM●                          ● END_BOTTOM
+         \                             /
+          ●-------------●-------------●
+   BOTTOM_START      BOTTOM      BOTTOM_END
+```
+
+Values, clockwise from the top: `TOP`, `TOP_END`, `END_TOP`, `END`, `END_BOTTOM`, `BOTTOM_END`,
+`BOTTOM`, `BOTTOM_START`, `START_BOTTOM`, `START`, `START_TOP`, `TOP_START`. Default: `TOP`.
+
+`stroke_start` is then an additional clockwise offset from that anchor, so animating it from `0.0`
+to `1.0` sweeps the stroke all the way around and back to the origin.
 
 ### Stroke Blur Type
 - **INNER**: The blur is applied inside the stroke, making the outer edges sharp.  
@@ -255,6 +283,9 @@ app:shadow_array="{10,0,4,10,#c8c8c8}, {10,0,4,10,#000000}"
 
 - **`updateStrokeProgress(progress: Float)`**  
   Updates the progress/length ratio of the stroke (`0.0` to `1.0`).
+
+- **`updateStrokeOrigin(origin: StrokeOrigin)`**  
+  Updates the point the stroke sweep starts from, e.g. `StrokeOrigin.TOP_END`.
 
 - **`setAutoAdjustPadding(isEnable: Boolean)`**  
   Enables or disables auto-adjust padding to accommodate stroke width automatically.
