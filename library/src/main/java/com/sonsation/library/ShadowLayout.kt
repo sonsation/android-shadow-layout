@@ -1160,7 +1160,10 @@ class ShadowLayout : FrameLayout {
                 pathMeasure.setPath(outlinePath, false)
                 val length = pathMeasure.length
 
-                val startDistance = startRatio * length
+                // A full turn lands back on the origin, so ratio 1 has to wrap to distance 0.
+                // Leaving it at `length` would make both getSegment calls below degenerate and
+                // the stroke would vanish instead of drawing the whole ring.
+                val startDistance = if (startRatio == 1f) 0f else startRatio * length
                 val endDistance = startDistance + lengthRatio * length
 
                 if (endDistance > length) {

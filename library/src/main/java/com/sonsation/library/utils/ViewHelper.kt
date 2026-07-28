@@ -195,22 +195,22 @@ fun Path.addSmoothRoundRect(
     val targetTopLeftRadius = if (radius.radiusHalf) {
         height.div(2f)
     } else {
-        radius.topLeftRadius * radius.radiusWeight + radiusOffset
+        offsetRadius(radius.topLeftRadius, radius.radiusWeight, radiusOffset)
     }
     val targetTopRightRadius = if (radius.radiusHalf) {
         height.div(2f)
     } else {
-        radius.topRightRadius * radius.radiusWeight + radiusOffset
+        offsetRadius(radius.topRightRadius, radius.radiusWeight, radiusOffset)
     }
     val targetBottomLeftRadius = if (radius.radiusHalf) {
         height.div(2f)
     } else {
-        radius.bottomLeftRadius * radius.radiusWeight + radiusOffset
+        offsetRadius(radius.bottomLeftRadius, radius.radiusWeight, radiusOffset)
     }
     val targetBottomRightRadius = if (radius.radiusHalf) {
         height.div(2f)
     } else {
-        radius.bottomRightRadius * radius.radiusWeight + radiusOffset
+        offsetRadius(radius.bottomRightRadius, radius.radiusWeight, radiusOffset)
     }
 
     val width = rect.width()
@@ -353,6 +353,18 @@ private fun Path.drawCorner(
             cornerX, cornerY, cornerX + diameter, cornerY + diameter, 180f, 90f, false
         )
     }
+}
+
+/**
+ * Applies an outward/inward offset (stroke outset, shadow spread) to one corner radius.
+ *
+ * Offsetting a curve of radius r outward by d gives radius r + d, but a square corner stays
+ * square however far it is offset. Without the guard a shape with mixed radii would grow a
+ * rounded shadow corner where the background has a sharp one.
+ */
+private fun offsetRadius(radius: Float, weight: Float, offset: Float): Float {
+    val scaled = radius * weight
+    return if (scaled > 0f) scaled + offset else 0f
 }
 
 private fun getCornerOffset(radius: Float, smoothing: Float, maxOffset: Float): Float {
