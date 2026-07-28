@@ -169,6 +169,14 @@ class MainActivity : AppCompatActivity() {
         setupSlider(bind.sliderStrokeBlur.root, "Stroke Blur", 0, 50, 0, "dp") {
             bind.shadowLayout.updateStrokeBlur(it * density)
         }
+        // The spinner entries are in the same clockwise order as the enum, so position == ordinal.
+        bind.spinnerStrokeOrigin.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
+                bind.shadowLayout.updateStrokeOrigin(com.sonsation.library.model.StrokeOrigin.entries[position])
+            }
+
+            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+        }
         setupSlider(bind.sliderStrokeStart.root, "Stroke Start", 0, 100, 0, "%") {
             bind.shadowLayout.updateStrokeStart(it / 100f)
         }
