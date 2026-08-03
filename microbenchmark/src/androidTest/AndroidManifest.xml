@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+      A library module cannot turn off debuggable through the Gradle DSL, and the
+      benchmark library refuses to produce numbers from a debuggable build.
+    -->
+    <application
+        android:debuggable="false"
+        tools:ignore="HardcodedDebugMode"
+        tools:replace="android:debuggable" />
+
+</manifest>

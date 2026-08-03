@@ -22,6 +22,11 @@ android {
             isIncludeAndroidResources = true
         }
     }
+
+    sourceSets {
+        // Shared with the :microbenchmark module instead of being duplicated.
+        getByName("androidTest").java.srcDir("$rootDir/testharness")
+    }
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
@@ -58,6 +63,10 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)
     testImplementation(libs.mockk)
+
+    androidTestImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.test.runner)
 }
 
 publishing {
