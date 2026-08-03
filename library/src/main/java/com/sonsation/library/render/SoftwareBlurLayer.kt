@@ -54,7 +54,7 @@ internal class SoftwareBlurLayer {
 
         // A stroked paint paints half its width to either side of the path.
         val strokeSpill = if (paint.style == Paint.Style.FILL) 0f else paint.strokeWidth / 2f
-        val outset = strokeSpill + blur + EDGE_PADDING
+        val outset = strokeSpill + blurExtent(blur) + EDGE_PADDING
 
         val width = ceil(contentBounds.width() + outset * 2f).toInt()
         val height = ceil(contentBounds.height() + outset * 2f).toInt()
@@ -113,7 +113,11 @@ internal class SoftwareBlurLayer {
     }
 
     companion object {
-        /** Slack so an anti-aliased edge is never cut off by rounding. */
-        private const val EDGE_PADDING = 2f
+        /**
+         * Slack for the anti-aliased edge, which paints up to a pixel past the geometry it
+         * covers. One pixel is enough here because this bitmap is 1:1 with the view - it is
+         * never downscaled the way [BitmapCacheShadowRenderer]'s is.
+         */
+        private const val EDGE_PADDING = 1f
     }
 }

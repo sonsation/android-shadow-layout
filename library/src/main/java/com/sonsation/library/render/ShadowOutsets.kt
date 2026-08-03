@@ -6,6 +6,10 @@ package com.sonsation.library.render
  * Blur, spread and offset all push a shadow outside the layout rect, and a cache that
  * only covered the bounds would clip it. Shared by every renderer that has to size an
  * offscreen surface around the view.
+ *
+ * What comes out is the geometry alone. Whatever slack a particular surface needs for its
+ * own rounding depends on that surface - a display list rounds outwards for free, a
+ * downscaled bitmap does not - so it is passed in rather than assumed here.
  */
 internal class ShadowOutsets {
 
@@ -18,9 +22,15 @@ internal class ShadowOutsets {
     var bottom = 0f
         private set
 
-    fun compute(context: ShadowRenderContext) {
+    /**
+     * @param padding extra slack on every side, for a surface that needs room for its own
+     *        rounding or for an anti-aliased edge. In the same units as the bounds, so a
+     *        renderer that rasterizes at a reduced resolution has to scale it up to get a
+     *        whole pixel out of it.
+     */
+    fun compute(context: ShadowRenderContext, padding: Float = 0f) {
 
-        val base = context.strokeOutset + context.strokeBlur
+        val base = context.strokeOutset + blurExtent(context.strokeBlur)
 
         left = base
         top = base
@@ -29,7 +39,7 @@ internal class ShadowOutsets {
 
         context.shadows.forEach { shadow ->
             if (shadow.isEnable) {
-                val bleed = context.strokeOutset + shadow.blurSize + shadow.shadowSpread
+                val bleed = context.strokeOutset + blurExtent(shadow.blurSize) + shadow.shadowSpread
                 val ox = shadow.shadowOffsetX
                 val oy = shadow.shadowOffsetY
 
@@ -40,14 +50,9 @@ internal class ShadowOutsets {
             }
         }
 
-        left += EDGE_PADDING
-        top += EDGE_PADDING
-        right += EDGE_PADDING
-        bottom += EDGE_PADDING
-    }
-
-    companion object {
-        /** Slack so anti-aliased edges are never cut off by rounding. */
-        private const val EDGE_PADDING = 2f
+        left += padding
+        top += padding
+        right += padding
+        bottom += padding
     }
 }
