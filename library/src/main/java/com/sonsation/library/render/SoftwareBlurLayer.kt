@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
+import com.sonsation.library.utils.blurExtent
 import kotlin.math.ceil
 
 /**
@@ -54,28 +55,21 @@ internal class SoftwareBlurLayer {
 
         // A stroked paint paints half its width to either side of the path.
         val strokeSpill = if (paint.style == Paint.Style.FILL) 0f else paint.strokeWidth / 2f
-        val outset = strokeSpill + blur + EDGE_PADDING
+        val outset = strokeSpill + blurExtent(blur) + EDGE_PADDING
 
         val width = ceil(contentBounds.width() + outset * 2f).toInt()
         val height = ceil(contentBounds.height() + outset * 2f).toInt()
 
-        if (width <= 0 || height <= 0) {
-            release()
-            return false
-        }
-
         left = contentBounds.left - outset
         top = contentBounds.top - outset
 
-        try {
-            if (bitmap?.width != width || bitmap?.height != height) {
-                bitmap?.recycle()
-                bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-                bitmapCanvas = Canvas(bitmap!!)
-            }
-        } catch (e: OutOfMemoryError) {
+        if (bitmap?.width != width || bitmap?.height != height) {
             release()
-            return false
+            // Nothing caps how far a blur may spread the shape, so this size can be
+            // anything at all - see [createShadowBitmap] for what that costs.
+            val created = createShadowBitmap(width, height) ?: return false
+            bitmap = created
+            bitmapCanvas = Canvas(created)
         }
 
         bitmap?.eraseColor(Color.TRANSPARENT)
@@ -96,14 +90,22 @@ internal class SoftwareBlurLayer {
         canvas.drawBitmap(ready, left, top, null)
     }
 
+    /**
+     * Drops the rasterization instead of recycling it, for the same reason
+     * [BitmapCacheShadowRenderer] does: the last frame's display list may still be holding
+     * this bitmap on the render thread.
+     */
     fun release() {
-        bitmap?.recycle()
         bitmap = null
         bitmapCanvas = null
     }
 
     companion object {
-        /** Slack so an anti-aliased edge is never cut off by rounding. */
-        private const val EDGE_PADDING = 2f
+        /**
+         * Slack for the anti-aliased edge, which paints up to a pixel past the geometry it
+         * covers. One pixel is enough here because this bitmap is 1:1 with the view - it is
+         * never downscaled the way [BitmapCacheShadowRenderer]'s is.
+         */
+        private const val EDGE_PADDING = 1f
     }
 }

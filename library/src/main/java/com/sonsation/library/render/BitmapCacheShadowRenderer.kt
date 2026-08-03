@@ -7,6 +7,7 @@ import android.graphics.Paint
 import android.graphics.Region
 import android.os.Build
 import android.view.View
+import kotlin.math.ceil
 
 /**
  * Rasterizes the shadows once into a software bitmap and blits that bitmap every frame.
@@ -44,24 +45,31 @@ internal class BitmapCacheShadowRenderer : ShadowRenderer {
             return true
         }
 
-        outsets.compute(context)
-        outsetLeft = outsets.left
-        outsetTop = outsets.top
         resolution = context.bitmapResolution
 
-        // A tiny view at a low resolution would otherwise round down to a zero sized bitmap.
-        val cacheWidth = ((width + outsets.left + outsets.right) * resolution).toInt().coerceAtLeast(1)
-        val cacheHeight = ((height + outsets.top + outsets.bottom) * resolution).toInt().coerceAtLeast(1)
+        outsets.compute(context, padding = EDGE_PADDING / resolution)
 
-        try {
-            if (bitmap?.width != cacheWidth || bitmap?.height != cacheHeight) {
-                bitmap?.recycle()
-                bitmap = Bitmap.createBitmap(cacheWidth, cacheHeight, Bitmap.Config.ARGB_8888)
-                bitmapCanvas = Canvas(bitmap!!)
-            }
-        } catch (e: OutOfMemoryError) {
+        // Rounded out to a whole bitmap pixel. Both the rasterization below and the blit in
+        // [draw] shift by this, and at a fractional offset that blit has to resample the
+        // cache against the transparent space around it - which eats the faint outer tail
+        // of the blur, where a gaussian keeps most of its reach.
+        outsetLeft = ceil(outsets.left * resolution) / resolution
+        outsetTop = ceil(outsets.top * resolution) / resolution
+
+        // Rounded up rather than truncated: the outsets are float, so a truncated size
+        // would drop the fraction off the right and bottom edges - and a tiny view at a
+        // low resolution would round all the way down to a zero sized bitmap.
+        val cacheWidth = ceil((width + outsetLeft + outsets.right) * resolution).toInt()
+        val cacheHeight = ceil((height + outsetTop + outsets.bottom) * resolution).toInt()
+
+        if (bitmap?.width != cacheWidth || bitmap?.height != cacheHeight) {
             release()
-            return false
+            // Nothing caps the blur or the spread of a shadow, so this size can be anything
+            // at all - see [createShadowBitmap] for what that costs and why it is checked
+            // rather than caught.
+            val created = createShadowBitmap(cacheWidth, cacheHeight) ?: return false
+            bitmap = created
+            bitmapCanvas = Canvas(created)
         }
 
         val target = bitmap ?: return true
@@ -71,7 +79,7 @@ internal class BitmapCacheShadowRenderer : ShadowRenderer {
         bitmapCanvas?.let { cv ->
             cv.save()
             cv.scale(resolution, resolution)
-            cv.translate(outsets.left - context.bounds.left, outsets.top - context.bounds.top)
+            cv.translate(outsetLeft - context.bounds.left, outsetTop - context.bounds.top)
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 cv.clipOutPath(context.backgroundPath)
@@ -109,9 +117,32 @@ internal class BitmapCacheShadowRenderer : ShadowRenderer {
         release()
     }
 
+    /**
+     * Drops the cache instead of recycling it.
+     *
+     * The bitmap the last frame drew is still held by that frame's display list, which the
+     * render thread may not be done with - `recycle()` here would pull the pixels out from
+     * under it. Letting go of the reference frees the memory just as surely, once nothing
+     * is drawing it any more.
+     */
     private fun release() {
-        bitmap?.recycle()
         bitmap = null
         bitmapCanvas = null
+    }
+
+    companion object {
+        /**
+         * Slack around the rasterized shadows, in *bitmap* pixels.
+         *
+         * An anti-aliased edge paints up to a pixel past the geometry it covers, and
+         * [blitPaint] filters the bitmap on the way back up, which samples a pixel further
+         * still - a shadow touching the edge of the bitmap would be smeared outwards by
+         * the clamp. One transparent pixel on every side covers both.
+         *
+         * Divided by the resolution before it reaches [ShadowOutsets] because those
+         * outsets are in view space. Added there as a constant instead, the slack would
+         * shrink with the downscale and be worth less than the rounding above costs.
+         */
+        private const val EDGE_PADDING = 1f
     }
 }

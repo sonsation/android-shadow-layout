@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.os.Build
 import com.sonsation.library.effet.Shadow
 import com.sonsation.library.render.BitmapCacheShadowRenderer
+import com.sonsation.library.render.blurExtent
 import com.sonsation.library.render.DirectShadowRenderer
 import com.sonsation.library.render.HardwareLayerShadowRenderer
 import com.sonsation.library.render.RenderNodeShadowRenderer
@@ -219,11 +220,13 @@ class RenderModeTest {
 
         val outsets = ShadowOutsets().apply { compute(context) }
 
-        // bleed = strokeOutset + blur + spread = 16, shifted by the offset, plus 2f of slack.
-        assertEquals(16f - 5f + 2f, outsets.left, 0.01f)
-        assertEquals(16f + 5f + 2f, outsets.right, 0.01f)
-        assertEquals(16f + 3f + 2f, outsets.top, 0.01f)
-        assertEquals(16f - 3f + 2f, outsets.bottom, 0.01f)
+        // bleed = strokeOutset + how far the blur reaches + spread, shifted by the offset.
+        val bleed = 2f + blurExtent(10f) + 4f
+
+        assertEquals(bleed - 5f, outsets.left, 0.01f)
+        assertEquals(bleed + 5f, outsets.right, 0.01f)
+        assertEquals(bleed + 3f, outsets.top, 0.01f)
+        assertEquals(bleed - 3f, outsets.bottom, 0.01f)
     }
 
     @Test
@@ -235,7 +238,55 @@ class RenderModeTest {
 
         val outsets = ShadowOutsets().apply { compute(context) }
 
-        assertEquals(14f, outsets.left, 0.01f)
-        assertEquals(14f, outsets.right, 0.01f)
+        assertEquals(8f + blurExtent(4f), outsets.left, 0.01f)
+        assertEquals(8f + blurExtent(4f), outsets.right, 0.01f)
+    }
+
+    @Test
+    fun outsetsCarryThePaddingTheCallerAsksFor() {
+        val context = ShadowRenderContext(RectF(0f, 0f, 100f, 100f), Path(), emptyList()).apply {
+            strokeOutset = 8f
+        }
+
+        val outsets = ShadowOutsets().apply { compute(context, padding = 4f) }
+
+        assertEquals(12f, outsets.left, 0.01f)
+        assertEquals(12f, outsets.top, 0.01f)
+        assertEquals(12f, outsets.right, 0.01f)
+        assertEquals(12f, outsets.bottom, 0.01f)
+    }
+
+    /**
+     * A BlurMaskFilter paints well past its own radius - the platform reads that radius as
+     * a Gaussian and draws out to three sigma. Sizing a cache from the radius alone cuts
+     * the blur off, which is what [blurExtent] exists to stop.
+     *
+     * The expected bleeds are measured, not derived: each is how far past the edge of a
+     * rect the last non transparent pixel sits, after filling that rect through a
+     * BlurMaskFilter of that radius. `ShadowBleedTest` takes the same measurements on a
+     * device, where they can move; these are the record of what was seen there.
+     */
+    @Test
+    fun blurReachesFurtherThanItsRadius() {
+        val measured = mapOf(1f to 3f, 4f to 8f, 10f to 19f, 20f to 36f, 40f to 70f)
+
+        measured.forEach { (radius, bleed) ->
+            val extent = blurExtent(radius)
+
+            assertTrue(
+                "radius $radius bleeds ${bleed}px, and $extent would clip it",
+                extent >= bleed
+            )
+            assertTrue(
+                "radius $radius bleeds ${bleed}px, and $extent wastes the difference",
+                extent <= bleed + 2f
+            )
+        }
+    }
+
+    @Test
+    fun noBlurReachesNowhere() {
+        assertEquals(0f, blurExtent(0f), 0f)
+        assertEquals(0f, blurExtent(-1f), 0f)
     }
 }

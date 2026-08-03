@@ -16,6 +16,8 @@ import com.sonsation.library.render.ShadowRendererFactory
 import com.sonsation.library.render.SoftwareBlurLayer
 import com.sonsation.library.utils.ViewHelper
 import com.sonsation.library.utils.addSmoothRoundRect
+import com.sonsation.library.utils.isBlurUsable
+import java.util.Collections
 import kotlin.math.abs
 
 
@@ -174,8 +176,28 @@ class ShadowLayout : FrameLayout {
         private set
     var strokeGradient: Gradient? = null
         private set
-    val shadows by lazy {
+    private val mutableShadows by lazy {
         mutableListOf<Shadow>()
+    }
+
+    /**
+     * The shadows, in paint order.
+     *
+     * Read only, for two reasons. A shadow added straight to the list would draw without
+     * marking the geometry dirty or invalidating, so the view would go on using the paths
+     * and the cache it built for the old list. And the list is walked while the view is
+     * drawing, where a mutation from anywhere else is a ConcurrentModificationException.
+     *
+     * [addBackgroundShadow] and the other setters do both halves of the job.
+     *
+     * Wrapped rather than merely typed read only, because Kotlin's `List` is only a promise
+     * to the compiler - a Java caller, or a cast, reaches the same mutable list underneath.
+     */
+    val shadows: List<Shadow>
+        get() = readOnlyShadows
+
+    private val readOnlyShadows: List<Shadow> by lazy {
+        Collections.unmodifiableList(mutableShadows)
     }
 
     var clipOutLine = false
@@ -360,7 +382,7 @@ class ShadowLayout : FrameLayout {
                 shadowSpread = a.getDimension(R.styleable.ShadowLayout_shadow_spread, 0f)
             )
 
-            shadows.add(shadow)
+            mutableShadows.add(shadow)
 
             val shadows = ViewHelper.parseShadowArray(
                 context,
@@ -368,7 +390,7 @@ class ShadowLayout : FrameLayout {
             )
 
             if (!shadows.isNullOrEmpty()) {
-                this.shadows.addAll(shadows)
+                mutableShadows.addAll(shadows)
             }
         } finally {
             a.recycle()
@@ -425,11 +447,12 @@ class ShadowLayout : FrameLayout {
     private val isBlurLostOnHardware: Boolean
         get() = Build.VERSION.SDK_INT < FIRST_SDK_WITH_HARDWARE_BLUR
 
+    // A blur the platform would reject is no blur at all, so it is not worth a bitmap either.
     private val needsSoftwareBackgroundBlur: Boolean
-        get() = isBlurLostOnHardware && backgroundBlur != 0f
+        get() = isBlurLostOnHardware && isBlurUsable(backgroundBlur)
 
     private val needsSoftwareStrokeBlur: Boolean
-        get() = isBlurLostOnHardware && (stroke?.takeIf { it.isEnable }?.blur ?: 0f) != 0f
+        get() = isBlurLostOnHardware && isBlurUsable(stroke?.takeIf { it.isEnable }?.blur ?: 0f)
 
     private var backgroundBlurLayer: SoftwareBlurLayer? = null
     private var strokeBlurLayer: SoftwareBlurLayer? = null
@@ -626,7 +649,7 @@ class ShadowLayout : FrameLayout {
 
     fun addBackgroundShadow(blurSize: Float, offsetX: Float, offsetY: Float, shadowColor: Int) {
         val shadow = Shadow(blurSize, shadowColor, offsetX, offsetY, 0f)
-        shadows.add(shadow)
+        mutableShadows.add(shadow)
         isPathDirty = true
         invalidate()
     }
@@ -639,37 +662,54 @@ class ShadowLayout : FrameLayout {
         shadowColor: Int
     ) {
         val shadow = Shadow(blurSize, shadowColor, offsetX, offsetY, spread)
-        shadows.add(shadow)
+        mutableShadows.add(shadow)
         isPathDirty = true
         invalidate()
     }
 
     fun removeBackgroundShadowLast() {
-        shadows.removeLastOrNull()
+        mutableShadows.removeLastOrNull()
         isPathDirty = true
         invalidate()
     }
 
     fun removeBackgroundShadowFirst() {
-        shadows.removeFirstOrNull()
+        mutableShadows.removeFirstOrNull()
         isPathDirty = true
         invalidate()
     }
 
     fun removeAllBackgroundShadows() {
-        shadows.clear()
+        mutableShadows.clear()
         isPathDirty = true
         invalidate()
     }
 
+    /**
+     * Whether [position] names a shadow that exists.
+     *
+     * The shadow list starts empty unless the view was inflated from XML, and any of the
+     * remove calls can empty it again, so a position is a request rather than a fact. The
+     * setters below ignore one that names nothing, which is how every other setter on this
+     * view treats a target that is not there - see [updateStrokeWidth] with no stroke set.
+     * [addBackgroundShadow] is the call that creates one.
+     */
+    private fun hasShadowAt(position: Int) = position >= 0 && position < mutableShadows.size
+
     fun removeBackgroundShadow(position: Int) {
-        shadows.removeAt(position)
+        if (!hasShadowAt(position)) {
+            return
+        }
+        mutableShadows.removeAt(position)
         isPathDirty = true
         invalidate()
     }
 
     fun updateBackgroundShadow(position: Int, shadow: Shadow) {
-        shadows[position] = shadow
+        if (!hasShadowAt(position)) {
+            return
+        }
+        mutableShadows[position] = shadow
         isPathDirty = true
         invalidate()
     }
@@ -681,7 +721,10 @@ class ShadowLayout : FrameLayout {
         offsetY: Float,
         color: Int
     ) {
-        updateBackgroundShadow(position, blurSize, offsetX, offsetY, shadows[position].shadowSpread, color)
+        if (!hasShadowAt(position)) {
+            return
+        }
+        updateBackgroundShadow(position, blurSize, offsetX, offsetY, mutableShadows[position].shadowSpread, color)
     }
 
     fun updateBackgroundShadow(
@@ -692,7 +735,11 @@ class ShadowLayout : FrameLayout {
         spread: Float,
         color: Int
     ) {
-        val shadow = shadows[position]
+        if (!hasShadowAt(position)) {
+            return
+        }
+
+        val shadow = mutableShadows[position]
         val wasEnable = shadow.isEnable
         val isEnableChanged = wasEnable != (color != ViewHelper.NOT_SET_COLOR)
         val geometryChanged = shadow.blurSize != blurSize || shadow.shadowOffsetX != offsetX || shadow.shadowOffsetY != offsetY || shadow.shadowSpread != spread || isEnableChanged
@@ -1043,14 +1090,16 @@ class ShadowLayout : FrameLayout {
         val blur = stroke?.blur ?: 0f
         val type = stroke?.blurType ?: BlurMaskFilter.Blur.NORMAL
         if (cachedStrokeBlur == blur && cachedStrokeBlurType == type) return
-        outlinePaint.maskFilter = if (blur != 0f) BlurMaskFilter(blur, type) else null
+        // A radius the platform will not take costs the blur, not the frame - see [isBlurUsable].
+        outlinePaint.maskFilter = if (isBlurUsable(blur)) BlurMaskFilter(blur, type) else null
         cachedStrokeBlur = blur
         cachedStrokeBlurType = type
     }
 
     private fun applyBackgroundBlur() {
         if (cachedBackgroundBlur == backgroundBlur && cachedBackgroundBlurType == backgroundBlurType) return
-        backgroundPaint.maskFilter = if (backgroundBlur != 0f) BlurMaskFilter(backgroundBlur, backgroundBlurType) else null
+        backgroundPaint.maskFilter =
+            if (isBlurUsable(backgroundBlur)) BlurMaskFilter(backgroundBlur, backgroundBlurType) else null
         cachedBackgroundBlur = backgroundBlur
         cachedBackgroundBlurType = backgroundBlurType
     }
@@ -1314,16 +1363,16 @@ class ShadowLayout : FrameLayout {
         }
 
         fun shadow(index: Int = 0, block: Shadow.() -> Unit) = apply {
-            if (index >= 0 && index < this@ShadowLayout.shadows.size) {
-                this@ShadowLayout.shadows[index].block()
+            if (this@ShadowLayout.hasShadowAt(index)) {
+                this@ShadowLayout.mutableShadows[index].block()
             } else {
                 val shadow = Shadow()
                 shadow.block()
-                this@ShadowLayout.shadows.add(shadow)
+                this@ShadowLayout.mutableShadows.add(shadow)
             }
         }
         
-        fun clearShadows() = apply { this@ShadowLayout.shadows.clear() }
+        fun clearShadows() = apply { this@ShadowLayout.mutableShadows.clear() }
 
         fun stroke(block: Stroke.() -> Unit) = apply {
             if (this@ShadowLayout.stroke == null) this@ShadowLayout.stroke = Stroke()
