@@ -55,11 +55,17 @@ internal class BitmapCacheShadowRenderer : ShadowRenderer {
 
         try {
             if (bitmap?.width != cacheWidth || bitmap?.height != cacheHeight) {
-                bitmap?.recycle()
+                release()
                 bitmap = Bitmap.createBitmap(cacheWidth, cacheHeight, Bitmap.Config.ARGB_8888)
                 bitmapCanvas = Canvas(bitmap!!)
             }
         } catch (e: OutOfMemoryError) {
+            release()
+            return false
+        } catch (e: RuntimeException) {
+            // A size whose byte count overflows 32 bits is rejected with an
+            // IllegalArgumentException rather than an OutOfMemoryError. Nothing caps the
+            // blur or the spread of a shadow, so an extreme value can reach that.
             release()
             return false
         }
@@ -109,8 +115,15 @@ internal class BitmapCacheShadowRenderer : ShadowRenderer {
         release()
     }
 
+    /**
+     * Drops the cache instead of recycling it.
+     *
+     * The bitmap the last frame drew is still held by that frame's display list, which the
+     * render thread may not be done with - `recycle()` here would pull the pixels out from
+     * under it. Letting go of the reference frees the memory just as surely, once nothing
+     * is drawing it any more.
+     */
     private fun release() {
-        bitmap?.recycle()
         bitmap = null
         bitmapCanvas = null
     }

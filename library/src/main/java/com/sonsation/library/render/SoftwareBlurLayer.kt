@@ -69,11 +69,17 @@ internal class SoftwareBlurLayer {
 
         try {
             if (bitmap?.width != width || bitmap?.height != height) {
-                bitmap?.recycle()
+                release()
                 bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
                 bitmapCanvas = Canvas(bitmap!!)
             }
         } catch (e: OutOfMemoryError) {
+            release()
+            return false
+        } catch (e: RuntimeException) {
+            // A size whose byte count overflows 32 bits is rejected with an
+            // IllegalArgumentException rather than an OutOfMemoryError, and nothing caps
+            // how far a blur may spread the shape.
             release()
             return false
         }
@@ -96,8 +102,12 @@ internal class SoftwareBlurLayer {
         canvas.drawBitmap(ready, left, top, null)
     }
 
+    /**
+     * Drops the rasterization instead of recycling it, for the same reason
+     * [BitmapCacheShadowRenderer] does: the last frame's display list may still be holding
+     * this bitmap on the render thread.
+     */
     fun release() {
-        bitmap?.recycle()
         bitmap = null
         bitmapCanvas = null
     }
