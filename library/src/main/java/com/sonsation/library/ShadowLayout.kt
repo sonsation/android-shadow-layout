@@ -9,6 +9,11 @@ import com.sonsation.library.effet.*
 import com.sonsation.library.model.Padding
 import com.sonsation.library.model.StrokeOrigin
 import com.sonsation.library.model.StrokeType
+import com.sonsation.library.render.DirectShadowRenderer
+import com.sonsation.library.render.ShadowRenderContext
+import com.sonsation.library.render.ShadowRenderer
+import com.sonsation.library.render.ShadowRendererFactory
+import com.sonsation.library.render.SoftwareBlurLayer
 import com.sonsation.library.utils.ViewHelper
 import com.sonsation.library.utils.addSmoothRoundRect
 import kotlin.math.abs
@@ -52,12 +57,6 @@ class ShadowLayout : FrameLayout {
         Paint()
     }
 
-    // Bilinear filtering smooths the cached shadow bitmap when it is scaled back up
-    // from shadowBitmapResolution (< 1) instead of showing hard pixel steps.
-    private val cacheBlitPaint by lazy {
-        Paint(Paint.FILTER_BITMAP_FLAG)
-    }
-
     private val backgroundPath by lazy {
         Path()
     }
@@ -78,20 +77,35 @@ class ShadowLayout : FrameLayout {
         const val RENDER_MODE_DEFAULT = 0
         const val RENDER_MODE_BITMAP_CACHE = 1
         const val RENDER_MODE_HARDWARE_LAYER = 2
+        const val RENDER_MODE_RENDER_NODE = 3
 
         // Lets the square outline go through the same origin aware builder as the rounded one.
         private val NO_RADIUS = Radius(0f)
+
+        /**
+         * First release whose hardware pipeline honours a `BlurMaskFilter`. Below this a
+         * blurred stroke or background has to be rasterized on the CPU first, which costs
+         * a bitmap - so the line is measured, not assumed. See
+         * `StrokeBlurHardwareCanvasTest`.
+         */
+        private const val FIRST_SDK_WITH_HARDWARE_BLUR = Build.VERSION_CODES.P
     }
 
-    var renderMode = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
-        RENDER_MODE_BITMAP_CACHE
-    } else {
-        RENDER_MODE_DEFAULT
-    }
+    var renderMode = ShadowRendererFactory.defaultMode()
         private set
 
-    private var cachedBitmap: Bitmap? = null
-    private var cacheCanvas: Canvas? = null
+    // How the shadows reach the screen. The view owns the geometry and hands it to the
+    // renderer through renderContext; swapping the strategy is the only thing a render
+    // mode change does.
+    private var renderer: ShadowRenderer = ShadowRendererFactory.create(renderMode)
+
+    private val renderContext by lazy {
+        ShadowRenderContext(layoutRect, backgroundPath, shadows)
+    }
+
+    // Used when the active renderer cannot draw on the current canvas (a software canvas
+    // cannot replay a display list, for instance). Allocated only if that happens.
+    private var fallbackRenderer: DirectShadowRenderer? = null
 
     // Cached BlurMaskFilter inputs so the filter is only reallocated when the blur
     // actually changes (mirrors the caching Shadow.updatePaint already does).
@@ -102,10 +116,17 @@ class ShadowLayout : FrameLayout {
 
     private var isPathDirty = true
     private var isPaintDirty = false
-    // The bitmap cache only holds shadows. It must be regenerated on any geometry
+    // A renderer's cache only holds shadows. It must be regenerated on any geometry
     // change (always implied by isPathDirty) or when a shadow's paint changes, but
     // NOT for background/stroke/gradient color changes that never touch the cache.
     private var isCacheDirty = true
+
+    // Which element a paint change belongs to, so the software blur rasterizations can be
+    // redone one at a time instead of both together. A setter that marks isPaintDirty
+    // without naming a scope - and isCacheDirty names the shadows - is treated as
+    // touching everything, so forgetting one of these costs work rather than correctness.
+    private var isBackgroundPaintDirty = false
+    private var isStrokePaintDirty = false
 
     // The stroke width actually used for both geometry and painting. Guards against
     // negative values and caps INSIDE/CENTER strokes so they cannot exceed the view
@@ -199,12 +220,13 @@ class ShadowLayout : FrameLayout {
             autoAdjustPadding = a.getBoolean(R.styleable.ShadowLayout_autoAdjustPadding, false)
             clipOutLine = a.getBoolean(R.styleable.ShadowLayout_clipToOutline, false)
             shadowBitmapResolution = a.getFloat(R.styleable.ShadowLayout_shadow_bitmap_resolution, 0.5f).coerceIn(0.01f, 1.0f)
-            var defaultRenderMode = RENDER_MODE_DEFAULT
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
-                defaultRenderMode = RENDER_MODE_BITMAP_CACHE
-            }
-            renderMode = a.getInt(R.styleable.ShadowLayout_shadow_render_mode, defaultRenderMode)
-            applyRenderMode()
+            renderMode = ShadowRendererFactory.resolveMode(
+                a.getInt(
+                    R.styleable.ShadowLayout_shadow_render_mode,
+                    ShadowRendererFactory.defaultMode()
+                )
+            )
+            installRenderer()
             stroke = Stroke(
                 strokeColor =
                 a.getColor(R.styleable.ShadowLayout_stroke_color, ViewHelper.NOT_SET_COLOR),
@@ -368,108 +390,120 @@ class ShadowLayout : FrameLayout {
     }
 
     fun updateRenderMode(mode: Int) {
-        renderMode = mode
-        applyRenderMode()
+        val resolved = ShadowRendererFactory.resolveMode(mode)
+
+        if (resolved == renderMode) {
+            return
+        }
+
+        renderMode = resolved
+        installRenderer()
         isPathDirty = true
         invalidate()
     }
 
-    private fun applyRenderMode() {
-        if (renderMode == RENDER_MODE_HARDWARE_LAYER) {
-            setLayerType(LAYER_TYPE_HARDWARE, null)
-        } else {
-            setLayerType(LAYER_TYPE_NONE, null)
+    /** Swaps in the strategy for [renderMode], letting the previous one release its cache. */
+    private fun installRenderer() {
+        renderer.onUninstalled(this)
+        renderer = ShadowRendererFactory.create(renderMode)
+        renderer.onInstalled(this)
+        // The layer only ever follows the renderer, so this is the only moment it can
+        // change - no need to reconsider it on every invalidation.
+        applyLayerType()
+    }
+
+    /**
+     * Before API 28 a `BlurMaskFilter` is silently dropped on a hardware canvas - the
+     * shape is drawn sharp, with no error. Measured on API 24 and 27: a stroke or
+     * background blur produces pixels identical to no blur at all, while API 36 blurs
+     * normally.
+     *
+     * The shadows escape this through [BitmapCacheShadowRenderer], the default below
+     * API 28. The background and the stroke have no such cover, so they rasterize
+     * themselves through [SoftwareBlurLayer] instead.
+     */
+    private val isBlurLostOnHardware: Boolean
+        get() = Build.VERSION.SDK_INT < FIRST_SDK_WITH_HARDWARE_BLUR
+
+    private val needsSoftwareBackgroundBlur: Boolean
+        get() = isBlurLostOnHardware && backgroundBlur != 0f
+
+    private val needsSoftwareStrokeBlur: Boolean
+        get() = isBlurLostOnHardware && (stroke?.takeIf { it.isEnable }?.blur ?: 0f) != 0f
+
+    private var backgroundBlurLayer: SoftwareBlurLayer? = null
+    private var strokeBlurLayer: SoftwareBlurLayer? = null
+
+    private fun applyLayerType() {
+        val target = renderer.preferredLayerType
+
+        if (layerType != target) {
+            setLayerType(target, null)
         }
     }
 
-    private var cacheOutsetLeft = 0f
-    private var cacheOutsetTop = 0f
+    /**
+     * Rebuilds the software rasterizations of the background and the stroke, and drops
+     * the ones that are no longer needed. No-op on the platforms that blur on hardware.
+     */
+    private fun updateSoftwareBlurLayers(rebuildBackground: Boolean, rebuildStroke: Boolean) {
 
-    private fun updateBitmapCache() {
-        val w = layoutRect.width()
-        val h = layoutRect.height()
-        if (w <= 0f || h <= 0f) return
-
-        val strokeOutset = this.strokeOutset
-        val strokeBlur = stroke?.takeIf { it.isEnable }?.blur ?: 0f
-
-        var maxOutsetLeft = strokeOutset + strokeBlur
-        var maxOutsetTop = strokeOutset + strokeBlur
-        var maxOutsetRight = strokeOutset + strokeBlur
-        var maxOutsetBottom = strokeOutset + strokeBlur
-
-        shadows.forEach { shadow ->
-            if (shadow.isEnable) {
-                val spread = shadow.shadowSpread
-                val blur = shadow.blurSize
-                val ox = shadow.shadowOffsetX
-                val oy = shadow.shadowOffsetY
-
-                val leftBleed = strokeOutset + (blur + spread) - ox
-                val rightBleed = strokeOutset + (blur + spread) + ox
-                val topBleed = strokeOutset + (blur + spread) - oy
-                val bottomBleed = strokeOutset + (blur + spread) + oy
-
-                if (leftBleed > maxOutsetLeft) maxOutsetLeft = leftBleed
-                if (rightBleed > maxOutsetRight) maxOutsetRight = rightBleed
-                if (topBleed > maxOutsetTop) maxOutsetTop = topBleed
-                if (bottomBleed > maxOutsetBottom) maxOutsetBottom = bottomBleed
+        if (needsSoftwareBackgroundBlur) {
+            val layer = backgroundBlurLayer ?: SoftwareBlurLayer().also { backgroundBlurLayer = it }
+            // A layer that has nothing in it yet has to rasterize whatever the flags say.
+            if (rebuildBackground || !layer.isReady) {
+                // A failed rebuild is not worth retrying every frame; drop back to painting
+                // the shape directly, blur and all.
+                if (!layer.rebuild(backgroundPath, backgroundPaint, backgroundBlur)) {
+                    layer.release()
+                    backgroundBlurLayer = null
+                }
             }
+        } else {
+            backgroundBlurLayer?.release()
+            backgroundBlurLayer = null
         }
 
-        maxOutsetLeft += 2f
-        maxOutsetTop += 2f
-        maxOutsetRight += 2f
-        maxOutsetBottom += 2f
-
-        cacheOutsetLeft = maxOutsetLeft
-        cacheOutsetTop = maxOutsetTop
-
-        val cacheW = ((w + maxOutsetLeft + maxOutsetRight) * shadowBitmapResolution).toInt()
-        val cacheH = ((h + maxOutsetTop + maxOutsetBottom) * shadowBitmapResolution).toInt()
-
-        try {
-            if (cachedBitmap?.width != cacheW || cachedBitmap?.height != cacheH) {
-                cachedBitmap?.recycle()
-                cachedBitmap = Bitmap.createBitmap(cacheW, cacheH, Bitmap.Config.ARGB_8888)
-                cacheCanvas = Canvas(cachedBitmap!!)
+        if (needsSoftwareStrokeBlur) {
+            val layer = strokeBlurLayer ?: SoftwareBlurLayer().also { strokeBlurLayer = it }
+            if (rebuildStroke || !layer.isReady) {
+                if (!layer.rebuild(strokePath, outlinePaint, stroke?.blur ?: 0f)) {
+                    layer.release()
+                    strokeBlurLayer = null
+                }
             }
-        } catch (e: OutOfMemoryError) {
-            renderMode = RENDER_MODE_DEFAULT
-            cachedBitmap = null
-            cacheCanvas = null
+        } else {
+            strokeBlurLayer?.release()
+            strokeBlurLayer = null
+        }
+    }
+
+    private fun drawShadows(canvas: Canvas) {
+
+        if (renderer.draw(canvas, renderContext)) {
             return
         }
 
-        cachedBitmap!!.eraseColor(Color.TRANSPARENT)
-        
-        cacheCanvas?.let { cv ->
-            cv.save()
-            cv.scale(shadowBitmapResolution, shadowBitmapResolution)
-            cv.translate(cacheOutsetLeft - layoutRect.left, cacheOutsetTop - layoutRect.top)
-            
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                cv.clipOutPath(backgroundPath)
-            } else {
-                @Suppress("DEPRECATION")
-                cv.clipPath(backgroundPath, Region.Op.DIFFERENCE)
-            }
-
-            shadows.forEach { shadow ->
-                shadow.updatePaint()
-                if (shadow.isEnable) {
-                    shadow.draw(cv)
-                }
-            }
-            cv.restore()
-        }
+        // The renderer passed on this frame - a display list cannot be replayed onto a
+        // software canvas, say. Paint the shadows straight onto it instead.
+        val fallback = fallbackRenderer ?: DirectShadowRenderer().also { fallbackRenderer = it }
+        fallback.draw(canvas, renderContext)
     }
-
-
 
     override fun dispatchDraw(canvas: Canvas) {
 
-        if (isPathDirty || isPaintDirty) {
+        val isCacheStale = isPathDirty || isCacheDirty
+        val wasDirty = isPathDirty || isPaintDirty
+
+        // A geometry change rebuilds both paths, so both rasterizations follow it. A paint
+        // change only needs the element it belongs to - unless no setter said which, in
+        // which case both are redone rather than risk leaving a stale one on screen.
+        val isPaintScopeKnown = isBackgroundPaintDirty || isStrokePaintDirty || isCacheDirty
+        val unscopedPaintChange = isPaintDirty && !isPaintScopeKnown
+        val rebuildBackgroundBlur = isPathDirty || isBackgroundPaintDirty || unscopedPaintChange
+        val rebuildStrokeBlur = isPathDirty || isStrokePaintDirty || unscopedPaintChange
+
+        if (wasDirty) {
             if (isPathDirty) {
                 setOutlineAndBackground(layoutRect)
             } else {
@@ -481,41 +515,37 @@ class ShadowLayout : FrameLayout {
                 }
                 shadow.updatePaint()
             }
-            if (renderMode == RENDER_MODE_BITMAP_CACHE && (isPathDirty || isCacheDirty)) {
-                updateBitmapCache()
-            }
             isPathDirty = false
             isPaintDirty = false
-            isCacheDirty = false
+            isBackgroundPaintDirty = false
+            isStrokePaintDirty = false
+
+            updateSoftwareBlurLayers(rebuildBackgroundBlur, rebuildStrokeBlur)
         }
 
-        if (renderMode == RENDER_MODE_BITMAP_CACHE && cachedBitmap != null) {
-            canvas.save()
-            val inverseScale = 1f / shadowBitmapResolution
-            canvas.scale(inverseScale, inverseScale)
-            canvas.drawBitmap(cachedBitmap!!, -cacheOutsetLeft * shadowBitmapResolution, -cacheOutsetTop * shadowBitmapResolution, cacheBlitPaint)
-            canvas.restore()
+        // Refreshed whenever the renderer is about to read it, rather than every frame.
+        if (wasDirty || isCacheStale) {
+            renderContext.strokeOutset = strokeOutset
+            renderContext.strokeBlur = stroke?.takeIf { it.isEnable }?.blur ?: 0f
+            renderContext.bitmapResolution = shadowBitmapResolution
+        }
+
+        if (!renderer.prepare(renderContext, isCacheStale)) {
+            // The renderer gave up for good (it ran out of memory building its cache).
+            renderMode = RENDER_MODE_DEFAULT
+            installRenderer()
+        }
+
+        isCacheDirty = false
+
+        drawShadows(canvas)
+
+        val background = backgroundBlurLayer
+        if (background != null && background.isReady) {
+            background.draw(canvas)
         } else {
-            try {
-                canvas.save()
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    canvas.clipOutPath(backgroundPath)
-                } else {
-                    @Suppress("DEPRECATION")
-                    canvas.clipPath(backgroundPath, Region.Op.DIFFERENCE)
-                }
-
-                shadows.forEach { shadow ->
-                    if (shadow.isEnable) {
-                        shadow.draw(canvas)
-                    }
-                }
-            } finally {
-                canvas.restore()
-            }
+            canvas.drawPath(backgroundPath, backgroundPaint)
         }
-
-        canvas.drawPath(backgroundPath, backgroundPaint)
 
         val forceInnerClip = autoAdjustPadding && stroke?.isEnable == true
 
@@ -533,7 +563,12 @@ class ShadowLayout : FrameLayout {
         }
 
         if (stroke?.isEnable == true) {
-            canvas.drawPath(strokePath, outlinePaint)
+            val strokeLayer = strokeBlurLayer
+            if (strokeLayer != null && strokeLayer.isReady) {
+                strokeLayer.draw(canvas)
+            } else {
+                canvas.drawPath(strokePath, outlinePaint)
+            }
         }
     }
 
@@ -567,6 +602,7 @@ class ShadowLayout : FrameLayout {
     fun updateBackgroundColor(color: Int) {
         backgroundColor = color
         isPaintDirty = true
+        isBackgroundPaintDirty = true
         invalidate()
     }
 
@@ -791,114 +827,133 @@ class ShadowLayout : FrameLayout {
         }
         
         isPaintDirty = true
+        isStrokePaintDirty = true
         invalidate()
     }
 
     fun updateGradientColor(startColor: Int, centerColor: Int, endColor: Int) {
         this.gradient?.updateGradientColor(startColor, centerColor, endColor)
         isPaintDirty = true
+        isBackgroundPaintDirty = true
         invalidate()
     }
 
     fun updateGradientColor(startColor: Int, endColor: Int) {
         this.gradient?.updateGradientColor(startColor, endColor)
         isPaintDirty = true
+        isBackgroundPaintDirty = true
         invalidate()
     }
 
     fun updateGradientAngle(angle: Int) {
         this.gradient?.updateGradientAngle(angle)
         isPaintDirty = true
+        isBackgroundPaintDirty = true
         invalidate()
     }
 
     fun updateGradientColors(colors: IntArray?) {
         this.gradient?.updateGradientColors(colors)
         isPaintDirty = true
+        isBackgroundPaintDirty = true
         invalidate()
     }
 
     fun updateGradientPositions(positions: FloatArray?) {
         this.gradient?.updateGradientPositions(positions)
         isPaintDirty = true
+        isBackgroundPaintDirty = true
         invalidate()
     }
 
     fun updateLocalMatrix(matrix: Matrix?) {
         this.gradient?.updateLocalMatrix(matrix)
         isPaintDirty = true
+        isBackgroundPaintDirty = true
         invalidate()
     }
 
     fun updateGradientShader(shader: LinearGradient?) {
         gradient?.updateGradientShader(shader)
         isPaintDirty = true
+        isBackgroundPaintDirty = true
         invalidate()
     }
 
     fun updateGradientOffsetX(offset: Float) {
         this.gradient?.updateGradientOffsetX(offset)
         isPaintDirty = true
+        isBackgroundPaintDirty = true
         invalidate()
     }
 
     fun updateGradientOffsetY(offset: Float) {
         this.gradient?.updateGradientOffsetY(offset)
         isPaintDirty = true
+        isBackgroundPaintDirty = true
         invalidate()
     }
 
     fun updateStrokeGradientColor(startColor: Int, centerColor: Int, endColor: Int) {
         this.strokeGradient?.updateGradientColor(startColor, centerColor, endColor)
         isPaintDirty = true
+        isStrokePaintDirty = true
         invalidate()
     }
 
     fun updateStrokeGradientColor(startColor: Int, endColor: Int) {
         this.strokeGradient?.updateGradientColor(startColor, endColor)
         isPaintDirty = true
+        isStrokePaintDirty = true
         invalidate()
     }
 
     fun updateStrokeGradientAngle(angle: Int) {
         this.strokeGradient?.updateGradientAngle(angle)
         isPaintDirty = true
+        isStrokePaintDirty = true
         invalidate()
     }
 
     fun updateStrokeGradientColors(colors: IntArray?) {
         this.strokeGradient?.updateGradientColors(colors)
         isPaintDirty = true
+        isStrokePaintDirty = true
         invalidate()
     }
 
     fun updateStrokeGradientPositions(positions: FloatArray?) {
         this.strokeGradient?.updateGradientPositions(positions)
         isPaintDirty = true
+        isStrokePaintDirty = true
         invalidate()
     }
 
     fun updateStrokeLocalMatrix(matrix: Matrix?) {
         this.strokeGradient?.updateLocalMatrix(matrix)
         isPaintDirty = true
+        isStrokePaintDirty = true
         invalidate()
     }
 
     fun updateStrokeGradientShader(shader: LinearGradient?) {
         this.strokeGradient?.updateGradientShader(shader)
         isPaintDirty = true
+        isStrokePaintDirty = true
         invalidate()
     }
 
     fun updateStrokeGradientOffsetX(offset: Float) {
         this.strokeGradient?.updateGradientOffsetX(offset)
         isPaintDirty = true
+        isStrokePaintDirty = true
         invalidate()
     }
 
     fun updateStrokeGradientOffsetY(offset: Float) {
         this.strokeGradient?.updateGradientOffsetY(offset)
         isPaintDirty = true
+        isStrokePaintDirty = true
         invalidate()
     }
 
@@ -911,24 +966,28 @@ class ShadowLayout : FrameLayout {
     fun updateBackgroundBlur(blur: Float) {
         this.backgroundBlur = blur
         isPaintDirty = true
+        isBackgroundPaintDirty = true
         invalidate()
     }
 
     fun updateBackgroundBlurType(blurType: BlurMaskFilter.Blur) {
         this.backgroundBlurType = blurType
         isPaintDirty = true
+        isBackgroundPaintDirty = true
         invalidate()
     }
 
     fun updateStrokeBlur(blur: Float) {
         this.stroke?.blur = blur
         isPaintDirty = true
+        isStrokePaintDirty = true
         invalidate()
     }
 
     fun updateStrokeBlurType(blurType: BlurMaskFilter.Blur) {
         this.stroke?.blurType = blurType
         isPaintDirty = true
+        isStrokePaintDirty = true
         invalidate()
     }
 
@@ -946,6 +1005,7 @@ class ShadowLayout : FrameLayout {
     fun updateStrokeAlpha(alpha: Int) {
         this.stroke?.strokeAlpha = alpha
         isPaintDirty = true
+        isStrokePaintDirty = true
         invalidate()
     }
 
@@ -1246,7 +1306,7 @@ class ShadowLayout : FrameLayout {
         fun backgroundColor(color: Int) = apply { this@ShadowLayout.backgroundColor = color }
         fun backgroundBlur(blur: Float) = apply { this@ShadowLayout.backgroundBlur = blur }
         fun backgroundBlurType(type: BlurMaskFilter.Blur) = apply { this@ShadowLayout.backgroundBlurType = type }
-        fun renderMode(mode: Int) = apply { this@ShadowLayout.renderMode = mode; this@ShadowLayout.applyRenderMode() }
+        fun renderMode(mode: Int) = apply { this@ShadowLayout.updateRenderMode(mode) }
         
         fun radius(block: Radius.() -> Unit) = apply {
             if (this@ShadowLayout.radius == null) this@ShadowLayout.radius = Radius()

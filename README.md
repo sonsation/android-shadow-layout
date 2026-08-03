@@ -66,9 +66,30 @@ This document serves as a reference for the available methods to update and cust
 | `app:background_radius_half`     | If `true`, sets the radius to half of the view's size for rounded effect.   |
 | `app:background_corner_smoothing`| Smooths the corners to create a continuous, squircle-like shape (Figma style). Range `0.0` to `1.0`. Default: `0.0`. |
 | `app:background_radius_weight`   | Weight multiplier applied to the corner radius. Default: `1.0`.            |
-| `app:shadow_render_mode`         | Rendering optimization mode. Options: `DEFAULT`, `BITMAP_CACHE`, `HARDWARE_LAYER`. Default: `DEFAULT`. |
-| `app:shadow_bitmap_resolution`   | Downscales the shadow bitmap resolution to drastically optimize memory usage when using `BITMAP_CACHE` mode. Example: `0.5` reduces memory by 75%. Range `0.01` to `1.0`. Default: `1.0`. |
-  
+| `app:shadow_render_mode`         | Rendering optimization mode. Options: `DEFAULT`, `BITMAP_CACHE`, `HARDWARE_LAYER`, `RENDER_NODE`. Default: `DEFAULT` (`BITMAP_CACHE` below API 28). |
+| `app:shadow_bitmap_resolution`   | Downscales the shadow bitmap resolution to drastically optimize memory usage when using `BITMAP_CACHE` mode. Example: `0.5` reduces memory by 75%. Range `0.01` to `1.0`. Default: `0.5`. |
+
+### Render modes
+
+Every mode paints the same shadows; they differ in where the result is cached.
+
+| Mode | Requires | What it does | Use it when |
+| --- | --- | --- | --- |
+| `DEFAULT` | - | Paints the shadows on every frame. No cache, no extra memory. On API 28+ the blur runs on the GPU. | The shadows change often, or the view is small. |
+| `BITMAP_CACHE` | - | Rasterizes the shadows once into a software `Bitmap` and blits it. `shadow_bitmap_resolution` trades sharpness for memory. | API < 28, where a blur forces the whole draw into software. |
+| `HARDWARE_LAYER` | - | Promotes the whole view - children included - into a hardware layer. | The view and its children are static. |
+| `RENDER_NODE` | API 29+ | Records the shadows into a `RenderNode` display list and replays it. Nothing is allocated on the Java heap, nothing is rasterized on the CPU, and the shadows keep full resolution. | Many shadows, large blurs, or a view whose children change while its shadows do not. |
+
+The default is `DEFAULT`, except below API 28 where a blur cannot run on a hardware canvas at
+all and `BITMAP_CACHE` is chosen automatically. `RENDER_NODE` is opt in.
+
+Setting `shadow_render_mode` explicitly always wins; it is only narrowed when the device cannot
+run it, and `renderMode` then reports what is actually in effect. Asking for `RENDER_NODE` below
+API 29 reports `BITMAP_CACHE`.
+
+On a canvas that cannot replay a display list - a screenshot, a print job - `RENDER_NODE` paints
+the shadows directly for that frame only.
+
 
 ## Reference
 
@@ -234,17 +255,17 @@ stops (right before the top-end corner radius begins) and `END_TOP` is where tha
 finishes. `START` / `END` follow the layout direction and mirror automatically in RTL.
 
 ```
-      TOP_START        TOP       TOP_END
-          ●-------------●-------------●
-         /                             \
-START_TOP●                             ● END_TOP
-         |                             |
-   START ●                             ● END
-         |                             |
-START_BOTTOM●                          ● END_BOTTOM
-         \                             /
-          ●-------------●-------------●
-   BOTTOM_START      BOTTOM      BOTTOM_END
+          TOP_START       TOP        TOP_END
+              ●------------●------------●
+             /                           \
+   START_TOP ●                           ● END_TOP
+             |                           |
+       START ●                           ● END
+             |                           |
+START_BOTTOM ●                           ● END_BOTTOM
+             \                           /
+              ●------------●------------●
+         BOTTOM_START    BOTTOM     BOTTOM_END
 ```
 
 Values, clockwise from the top: `TOP`, `TOP_END`, `END_TOP`, `END`, `END_BOTTOM`, `BOTTOM_END`,

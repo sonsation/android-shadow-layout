@@ -24,3 +24,4 @@ dependencyResolutionManagement {
 rootProject.name = "ShadowLayout"
 include(":app")
 include(":library")
+include(":microbenchmark")

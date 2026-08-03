@@ -136,6 +136,13 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Shape
+        setupSlider(bind.sliderPreviewSize.root, "Preview Size", 60, 280, 160, "dp") {
+            val size = (it * density).toInt()
+            bind.shadowLayout.layoutParams = bind.shadowLayout.layoutParams.apply {
+                width = size
+                height = size
+            }
+        }
         setupSlider(bind.sliderCornerRadius.root, "Corner Radius", 0, 100, 32, "dp") {
             bind.shadowLayout.updateRadius(it * density)
         }
@@ -228,6 +235,7 @@ class MainActivity : AppCompatActivity() {
                 R.id.rb_render_default -> bind.shadowLayout.updateRenderMode(com.sonsation.library.ShadowLayout.RENDER_MODE_DEFAULT)
                 R.id.rb_render_bitmap -> bind.shadowLayout.updateRenderMode(com.sonsation.library.ShadowLayout.RENDER_MODE_BITMAP_CACHE)
                 R.id.rb_render_hardware -> bind.shadowLayout.updateRenderMode(com.sonsation.library.ShadowLayout.RENDER_MODE_HARDWARE_LAYER)
+                R.id.rb_render_node -> bind.shadowLayout.updateRenderMode(com.sonsation.library.ShadowLayout.RENDER_MODE_RENDER_NODE)
             }
         }
         bind.rgBlurType.setOnCheckedChangeListener { _, checkedId ->

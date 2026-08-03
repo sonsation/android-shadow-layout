@@ -430,6 +430,16 @@ class ShadowLayoutTest {
         layout.draw(canvas)
     }
 
+    /** Reaches the shadow bitmap the active BITMAP_CACHE renderer holds. */
+    private fun cachedShadowBitmap(layout: ShadowLayout): Bitmap? {
+        val renderer = ShadowLayout::class.java.getDeclaredField("renderer")
+            .apply { isAccessible = true }
+            .get(layout)
+        return renderer.javaClass.getDeclaredField("bitmap")
+            .apply { isAccessible = true }
+            .get(renderer) as? Bitmap
+    }
+
     @Test
     fun testLargeStrokeWidthWithShadowNotClipped() {
         val layout = ShadowLayout(context)
@@ -453,8 +463,7 @@ class ShadowLayoutTest {
 
         // For OUTSIDE stroke of width 50 and blur 20, maxOutset is at least 50 + 20 = 70.
         // Unscaled width (200 + 70*2 + outsets) with resolution 0.5 should result in cache width > (200 + 140) * 0.5 = 170.
-        val cachedField = ShadowLayout::class.java.getDeclaredField("cachedBitmap").apply { isAccessible = true }
-        val cached = cachedField.get(layout) as? Bitmap
+        val cached = cachedShadowBitmap(layout)
         assertNotNull(cached)
         assertTrue("Cached bitmap width should include stroke outset", cached!!.width >= 170)
 
@@ -462,7 +471,7 @@ class ShadowLayoutTest {
         layout.updateStrokeType(StrokeType.CENTER)
         layout.invalidate()
         layout.draw(canvas)
-        val cachedCenter = cachedField.get(layout) as? Bitmap
+        val cachedCenter = cachedShadowBitmap(layout)
         assertNotNull(cachedCenter)
         // For CENTER stroke of width 50, stroke outset is 25. Outset is at least 25 + 20 = 45.
         assertTrue("Cached bitmap width for CENTER stroke should include half stroke width", cachedCenter!!.width >= 145)
