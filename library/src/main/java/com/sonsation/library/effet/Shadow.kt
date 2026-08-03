@@ -3,6 +3,7 @@ package com.sonsation.library.effet
 import android.graphics.*
 import com.sonsation.library.utils.ViewHelper
 import com.sonsation.library.utils.addSmoothRoundRect
+import com.sonsation.library.utils.isBlurUsable
 
 class Shadow(
     var blurSize: Float = 0f,
@@ -31,7 +32,9 @@ class Shadow(
         }
         
         if (cachedBlurSize != blurSize || cachedBlurType != blurType) {
-            if (blurSize != 0f) {
+            // A radius the platform will not take is left unblurred rather than allowed to
+            // throw out of dispatchDraw - see [isBlurUsable].
+            if (isBlurUsable(blurSize)) {
                 paint.maskFilter = BlurMaskFilter(blurSize, blurType)
             } else {
                 paint.maskFilter = null

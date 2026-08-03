@@ -1,4 +1,15 @@
-package com.sonsation.library.render
+package com.sonsation.library.utils
+
+/**
+ * Whether [radius] can be handed to a `BlurMaskFilter` at all.
+ *
+ * The constructor takes only a positive, finite radius. Zero, a negative, NaN and infinity
+ * are all rejected with an IllegalArgumentException - measured on API 36, where every one of
+ * those throws. The paints are built inside `dispatchDraw`, so a radius that arrives from an
+ * animation that overshot or divided by zero would take the app down rather than cost it a
+ * blur. Checking here is what keeps a bad number a missing blur instead of a crash.
+ */
+internal fun isBlurUsable(radius: Float): Boolean = radius > 0f && radius.isFinite()
 
 /**
  * How far a `BlurMaskFilter` of [radius] actually paints outside the shape it blurs.
@@ -15,10 +26,12 @@ package com.sonsation.library.render
  * over, at radii 11, 26 and 67). Rounding a whole pixel out covers that, and makes this an
  * upper bound rather than a fit: what a surface sized from it can afford is being a pixel
  * too large, never a pixel too small.
+ *
+ * A radius [isBlurUsable] rejects reaches nothing, because the platform never blurs it.
  */
 internal fun blurExtent(radius: Float): Float {
 
-    if (radius <= 0f) {
+    if (!isBlurUsable(radius)) {
         return 0f
     }
 

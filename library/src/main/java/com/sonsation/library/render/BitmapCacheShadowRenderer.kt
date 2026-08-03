@@ -62,21 +62,14 @@ internal class BitmapCacheShadowRenderer : ShadowRenderer {
         val cacheWidth = ceil((width + outsetLeft + outsets.right) * resolution).toInt()
         val cacheHeight = ceil((height + outsetTop + outsets.bottom) * resolution).toInt()
 
-        try {
-            if (bitmap?.width != cacheWidth || bitmap?.height != cacheHeight) {
-                release()
-                bitmap = Bitmap.createBitmap(cacheWidth, cacheHeight, Bitmap.Config.ARGB_8888)
-                bitmapCanvas = Canvas(bitmap!!)
-            }
-        } catch (e: OutOfMemoryError) {
+        if (bitmap?.width != cacheWidth || bitmap?.height != cacheHeight) {
             release()
-            return false
-        } catch (e: RuntimeException) {
-            // A size whose byte count overflows 32 bits is rejected with an
-            // IllegalArgumentException rather than an OutOfMemoryError. Nothing caps the
-            // blur or the spread of a shadow, so an extreme value can reach that.
-            release()
-            return false
+            // Nothing caps the blur or the spread of a shadow, so this size can be anything
+            // at all - see [createShadowBitmap] for what that costs and why it is checked
+            // rather than caught.
+            val created = createShadowBitmap(cacheWidth, cacheHeight) ?: return false
+            bitmap = created
+            bitmapCanvas = Canvas(created)
         }
 
         val target = bitmap ?: return true

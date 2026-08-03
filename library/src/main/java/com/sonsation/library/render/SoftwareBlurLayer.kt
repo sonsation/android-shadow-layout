@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
+import com.sonsation.library.utils.blurExtent
 import kotlin.math.ceil
 
 /**
@@ -59,29 +60,16 @@ internal class SoftwareBlurLayer {
         val width = ceil(contentBounds.width() + outset * 2f).toInt()
         val height = ceil(contentBounds.height() + outset * 2f).toInt()
 
-        if (width <= 0 || height <= 0) {
-            release()
-            return false
-        }
-
         left = contentBounds.left - outset
         top = contentBounds.top - outset
 
-        try {
-            if (bitmap?.width != width || bitmap?.height != height) {
-                release()
-                bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-                bitmapCanvas = Canvas(bitmap!!)
-            }
-        } catch (e: OutOfMemoryError) {
+        if (bitmap?.width != width || bitmap?.height != height) {
             release()
-            return false
-        } catch (e: RuntimeException) {
-            // A size whose byte count overflows 32 bits is rejected with an
-            // IllegalArgumentException rather than an OutOfMemoryError, and nothing caps
-            // how far a blur may spread the shape.
-            release()
-            return false
+            // Nothing caps how far a blur may spread the shape, so this size can be
+            // anything at all - see [createShadowBitmap] for what that costs.
+            val created = createShadowBitmap(width, height) ?: return false
+            bitmap = created
+            bitmapCanvas = Canvas(created)
         }
 
         bitmap?.eraseColor(Color.TRANSPARENT)

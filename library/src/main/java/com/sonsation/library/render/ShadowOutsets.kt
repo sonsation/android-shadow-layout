@@ -1,5 +1,7 @@
 package com.sonsation.library.render
 
+import com.sonsation.library.utils.blurExtent
+
 /**
  * How far the shadows bleed past the view bounds on each side.
  *
