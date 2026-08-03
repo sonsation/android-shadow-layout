@@ -92,6 +92,7 @@
             <enum name="DEFAULT" value="0"/>
             <enum name="BITMAP_CACHE" value="1"/>
             <enum name="HARDWARE_LAYER" value="2"/>
+            <enum name="RENDER_NODE" value="3"/>
         </attr>
     </declare-styleable>
 </resources>
