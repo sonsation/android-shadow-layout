@@ -6,7 +6,7 @@ import android.graphics.Color
 import android.os.Build
 import com.sonsation.library.effet.Shadow
 import com.sonsation.library.render.BitmapCacheShadowRenderer
-import com.sonsation.library.render.blurExtent
+import com.sonsation.library.utils.blurExtent
 import com.sonsation.library.render.DirectShadowRenderer
 import com.sonsation.library.render.HardwareLayerShadowRenderer
 import com.sonsation.library.render.RenderNodeShadowRenderer

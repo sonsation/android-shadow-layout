@@ -11,7 +11,7 @@ import android.graphics.RectF
 import android.view.View
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import com.sonsation.library.render.blurExtent
+import com.sonsation.library.utils.blurExtent
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
