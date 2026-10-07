@@ -513,6 +513,26 @@ view.updateStrokeWidth(4f)
 view.updateGradientColor(Color.BLUE, Color.GREEN)
 ```
 
+---
+
+## ProGuard / R8
+
+ShadowLayout is fully compatible with R8 (including R8 Full Mode) and ProGuard out of the box.
+
+The library does not use reflection, JNI, or runtime serialization. Because Android's AAPT2 automatically detects and preserves custom views used in layout XML files, **no additional ProGuard / R8 configuration is required**.
+
+If you instantiate `ShadowLayout` dynamically via reflection or custom view inflation, you may optionally keep its constructors in your `proguard-rules.pro`:
+
+```proguard
+-keep class com.sonsation.library.ShadowLayout {
+    public <init>(android.content.Context);
+    public <init>(android.content.Context, android.util.AttributeSet);
+    public <init>(android.content.Context, android.util.AttributeSet, int);
+}
+```
+
+---
+
 ## License
 ```
 License
